@@ -1,8 +1,8 @@
 ########################
-#     Naive Bayes      #
+#       kNN            #
 ########################
 
-minimum_sample_naivebayes <- function(X,Y,p_vec,thr_acc,n.cores){
+minimum_sample_knn <- function(X,Y,p_vec,thr_acc,n.cores){
   
   # For paralelization with foreach:
   n.cores <- parallel::detectCores() - 2
@@ -60,9 +60,9 @@ minimum_sample_naivebayes <- function(X,Y,p_vec,thr_acc,n.cores){
     
     # Training data:
     trainFit <- train(x = trainX, y = trainY,
-                   method = "nb", 
-                   metric = "Kappa",
-                   trControl = train_control)
+                      method = "knn", 
+                      metric = "Kappa", 
+                      trControl = train_control)
     
     # Predictions:
     Prediction <- predict(trainFit, newdata = testX)

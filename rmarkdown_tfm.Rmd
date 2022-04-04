@@ -222,13 +222,48 @@ system.time(
 minimum_sample_naivebayes(X = X, Y = Y,
                   p_vec = 1:99/100,
                   thr_acc = 0.95,
-                  n.cores = 8)
+                  n.cores = 1)
 )
 ```
 
 
 
+## kNN, paralelization
 
+
+```{r}
+# Imports:
+library(caret)
+library(foreach)
+source("./codes/cohen_kappa_fun.R")
+# Data:
+require(ISLR)
+attach(Smarket) # attach allows you to look up in R variables within a dataframe
+```
+
+
+```{r}
+# Predictor:
+X <- Smarket[-ncol(Smarket)]
+# Predict:
+Y <- Smarket[ncol(Smarket)]
+Y <- unlist(Y)
+```
+
+
+```{r}
+source("./codes/knn_fun_parallel.R")
+```
+
+
+```{r}
+system.time(
+minimum_sample_knn(X = X, Y = Y,
+                  p_vec = 1:99/100,
+                  thr_acc = 0.85,
+                  n.cores = 1)
+)
+```
 
 
 
