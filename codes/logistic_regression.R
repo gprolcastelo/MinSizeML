@@ -130,7 +130,7 @@ lines(df_acc_cohen$training_set_size,
 
 # # Upper line:
 lines(df_acc_cohen$training_set_size,
-      predictY.up, col = "green")
+      predictY.up, col = "blue")
 
 # # Lower line:
 lines(df_acc_cohen$training_set_size,
