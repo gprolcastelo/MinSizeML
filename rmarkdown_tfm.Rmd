@@ -4,18 +4,22 @@ output: html_document
 date: '2022-03-25'
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+## Hide warnings:
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
 
 ## Logistic regression with glm
 
 Data & param:
+
 ```{r}
 # Imports:
 library(caret)
 source("./codes/cohen_kappa_fun.R")
+source("./codes/CI_MinimumSampleSize_fun.R")
+source("./codes/fit_acc_fun.R")
 # Data:
 require(ISLR)
 attach(Smarket) # attach allows you to look up in R variables within a dataframe
@@ -29,11 +33,9 @@ Y <- Smarket[ncol(Smarket)]
 Y <- unlist(Y)
 ```
 
-
 ```{r}
 source("./codes/logistic_regression_fun.R")
 ```
-
 
 ```{r}
 system.time(
@@ -42,22 +44,18 @@ MinSizeLogReg <- minimum_sample_logistic(X,Y,p_vec=1:99/100,thr_acc=0.95)
 MinSizeLogReg
 ```
 
-```{r}
-
-```
-
-
 ## Logistic regression with train.
 
 ```{r}
 # Imports:
 library(caret)
 source("./codes/cohen_kappa_fun.R")
+source("./codes/CI_MinimumSampleSize_fun.R")
+source("./codes/fit_acc_fun.R")
 # Data:
 require(ISLR)
 attach(Smarket) # attach allows you to look up in R variables within a dataframe
 ```
-
 
 ```{r}
 # Predictor:
@@ -67,18 +65,15 @@ Y <- Smarket[ncol(Smarket)]
 Y <- unlist(Y)
 ```
 
-
 ```{r}
 source("./codes/logistic_regression_fun_v2.R")
 ```
-
 
 ```{r}
 system.time(
 minimum_sample_logistic_v2(X,Y,p_vec = 1:99/100, thr_acc = 0.95)
 )
 ```
-
 
 ## Logistic regression with train, and parallelization.
 
@@ -87,11 +82,12 @@ minimum_sample_logistic_v2(X,Y,p_vec = 1:99/100, thr_acc = 0.95)
 library(caret)
 library(foreach)
 source("./codes/cohen_kappa_fun.R")
+source("./codes/CI_MinimumSampleSize_fun.R")
+source("./codes/fit_acc_fun.R")
 # Data:
 require(ISLR)
 attach(Smarket) # attach allows you to look up in R variables within a dataframe
 ```
-
 
 ```{r}
 # Predictor:
@@ -101,11 +97,9 @@ Y <- Smarket[ncol(Smarket)]
 Y <- unlist(Y)
 ```
 
-
 ```{r}
 source("./codes/logistic_regression_fun_v2_parallel.R")
 ```
-
 
 ```{r}
 system.time(
@@ -119,11 +113,12 @@ minimum_sample_logistic_v2_parallel(X,Y,p_vec = 1:99/100, thr_acc = 0.95, n.core
 # Imports:
 library(caret)
 source("./codes/cohen_kappa_fun.R")
+source("./codes/CI_MinimumSampleSize_fun.R")
+source("./codes/fit_acc_fun.R")
 # Data:
 require(ISLR)
 attach(Smarket) # attach allows you to look up in R variables within a dataframe
 ```
-
 
 ```{r}
 # Predictor:
@@ -133,11 +128,9 @@ Y <- Smarket[ncol(Smarket)]
 Y <- unlist(Y)
 ```
 
-
 ```{r}
 source("./codes/rf_fun.R")
 ```
-
 
 ```{r}
 system.time(
@@ -147,21 +140,19 @@ minimum_sample_rf(X = X, Y = Y,
 )
 ```
 
-
-
 ## Random forest, paralelization
-
 
 ```{r}
 # Imports:
 library(caret)
 library(foreach)
 source("./codes/cohen_kappa_fun.R")
+source("./codes/CI_MinimumSampleSize_fun.R")
+source("./codes/fit_acc_fun.R")
 # Data:
 require(ISLR)
 attach(Smarket) # attach allows you to look up in R variables within a dataframe
 ```
-
 
 ```{r}
 # Predictor:
@@ -171,37 +162,32 @@ Y <- Smarket[ncol(Smarket)]
 Y <- unlist(Y)
 ```
 
-
 ```{r}
 source("./codes/rf_fun_parallel.R")
 ```
-
 
 ```{r}
 system.time(
 minimum_sample_rf_parallel(X = X, Y = Y,
                   p_vec = 1:99/100,
                   thr_acc = 0.95,
-                  n.cores = 8)
+                  n.cores = 12)
 )
 ```
 
-
-
-
 ## Naive Bayes, paralelization
-
 
 ```{r}
 # Imports:
 library(caret)
 library(foreach)
 source("./codes/cohen_kappa_fun.R")
+source("./codes/CI_MinimumSampleSize_fun.R")
+source("./codes/fit_acc_fun.R")
 # Data:
 require(ISLR)
 attach(Smarket) # attach allows you to look up in R variables within a dataframe
 ```
-
 
 ```{r}
 # Predictor:
@@ -211,11 +197,9 @@ Y <- Smarket[ncol(Smarket)]
 Y <- unlist(Y)
 ```
 
-
 ```{r}
 source("./codes/nb_fun_parallel.R")
 ```
-
 
 ```{r}
 system.time(
@@ -226,21 +210,19 @@ minimum_sample_naivebayes(X = X, Y = Y,
 )
 ```
 
-
-
 ## kNN, paralelization
-
 
 ```{r}
 # Imports:
 library(caret)
 library(foreach)
 source("./codes/cohen_kappa_fun.R")
+source("./codes/CI_MinimumSampleSize_fun.R")
+source("./codes/fit_acc_fun.R")
 # Data:
 require(ISLR)
 attach(Smarket) # attach allows you to look up in R variables within a dataframe
 ```
-
 
 ```{r}
 # Predictor:
@@ -250,11 +232,9 @@ Y <- Smarket[ncol(Smarket)]
 Y <- unlist(Y)
 ```
 
-
 ```{r}
 source("./codes/knn_fun_parallel.R")
 ```
-
 
 ```{r}
 system.time(
@@ -264,44 +244,3 @@ minimum_sample_knn(X = X, Y = Y,
                   n.cores = 1)
 )
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

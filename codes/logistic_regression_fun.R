@@ -86,45 +86,70 @@ fit_accuracy <- nls(acc_vec~(1-a)-b*training_set_size^c,
                     control = nls.control(maxiter = 100, tol = 1e-8),
                     algorithm = "port"
                     )  
-# Figueroa say they use nl2sol, which corresponds to algorithm="port"
-# port uses the nl2sol algorithm from the Port library
-# However, this is from the nls documentation:
-# "The algorithm = "port" code appears unfinished, 
-# and does not even check that the starting value is within the bounds. 
-# Use with caution, especially where bounds are supplied."
-# https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/nls
-
-# Plot accuracy vs size of training set.
-# Circles = calculated values of accuracy given a sample size.
-# Lines = fitted data.
-plot(df_acc_cohen$training_set_size,
-     df_acc_cohen$acc_vec,
-     xlab = "Training set size", ylab = "Accuracy of prediction")
-lines(df_acc_cohen$training_set_size,
-      predict(fit_accuracy,df_acc_cohen$training_set_size))
-
-# Predictions: get a finer set of accuracies from fitted data.
 
 # Coefficients: 
 a_fit <- summary(fit_accuracy)$coefficients[,1][[1]]
 b_fit <- summary(fit_accuracy)$coefficients[,1][[2]]
 c_fit <- summary(fit_accuracy)$coefficients[,1][[3]]
 
-# New values of sample size:
-# new_data <- 1:2000
-# New, fitted values of accuracy:
-# new_acc <- (1-a_fit)-b_fit*new_data^c_fit
+# Confidence intervals for fitted curve (from Figueroa 2012 appendix):
+se.fit <- sqrt(apply(fit_accuracy$m$gradient(),
+                     1,
+                     function(x) sum(vcov(fit_accuracy)*outer(x,x)))
+);
+prediction.ci <- predict(fit_accuracy,x=df_acc_cohen$training_set_size) + outer(se.fit,qnorm(c(.5, .025,.975)))
 
-# Minimum sample size, based on accuracy:
-# min_sam_size <- new_data[which(new_acc==new_acc[new_acc >=0.95][1])[[1]]]
+predictY<-prediction.ci[,1];
+predictY.lw<-prediction.ci[,2];
+predictY.up<-prediction.ci[,3];
 
+# Plot accuracy vs size of training set.
+# Circles = calculated values of accuracy given a sample size.
+# Lines = fitted data.
+
+# # Calculated accuracy vs sample size
+plot(df_acc_cohen$training_set_size,
+     df_acc_cohen$acc_vec,
+     xlab = "Training set size", ylab = "Accuracy of prediction")
+# # Middle line:
+lines(df_acc_cohen$training_set_size,
+      predict(fit_accuracy,df_acc_cohen$training_set_size))
+
+# # Upper line:
+lines(df_acc_cohen$training_set_size,
+      predictY.up, col = "blue")
+
+# # Lower line:
+lines(df_acc_cohen$training_set_size,
+      predictY.lw, col = "red")
+
+# Minimum sample size calculation:
 # Simply with the formula, solving for new_data:
-min_sam_size <- abs(((1-a_fit-thr_acc)/b_fit)^(1/c_fit))
+min_sam_size <- fit_acc_fun(a_fit,b_fit,c_fit,thr_acc)
 
+# Confidence interval for minimum sample size:
+CI_vec <- CI_MinimumSampleSize_fun(df_acc_cohen$training_set_size,
+                                   prediction.ci,
+                                   thr_acc,
+                                   min_sam_size,
+                                   fit_accuracy,
+                                   w=0.005)
+
+# Print results.
 print("For minimum accuracy:")
 print(thr_acc)
 print("Minimum sample size:")
 print(min_sam_size)
+
+
+print("CI for minimum sample size: a)")
+print(CI_vec$a)
+print("CI for minimum sample size: b)")
+print(CI_vec$b)
+print("CI for minimum sample size: c)")
+print(CI_vec$c)
+print("CI for minimum sample size: d)")
+print(CI_vec$d)
 
 return(min_sam_size)
 
