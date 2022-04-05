@@ -220,45 +220,16 @@ source("./codes/cohen_kappa_fun.R")
 source("./codes/CI_MinimumSampleSize_fun.R")
 source("./codes/fit_acc_fun.R")
 # Data:
-# require(ISLR)
-# attach(Smarket) # attach allows you to look up in R variables within a dataframe
+require(ISLR)
+attach(Smarket) # attach allows you to look up in R variables within a dataframe
 ```
 
 ```{r}
-# # Predictor:
-# X <- Smarket[-ncol(Smarket)]
-# # Predict:
-# Y <- Smarket[ncol(Smarket)]
-# Y <- unlist(Y)
-```
-
-```{r}
-# Wisconsin breast cancer data:
-wbcd <- read.csv("./data/classification/wisc_bc_data.csv", 
-                 stringsAsFactors = FALSE)
-# id column provides no info, so we remove it:
-wbcd <- wbcd[-1]
-
-# label diagnosis column:
-wbcd$diagnosis<- factor(wbcd$diagnosis, 
-                        levels = c("B", "M"),
-                        labels = c("Benign", "Malignant")
-                        )
-
-# Function for normalization:
-normalize <- function(x) {
-return ((x - min(x)) / (max(x) - min(x)))
-}
-
-# create new df with normalized numerical columns:
-wbcd_n <- as.data.frame(lapply(wbcd[2:31], normalize))
-```
-
-```{r}
-# Variable to predict:
-Y_wbcd <- wbcd[,1]
-# Variables to use as predictors:
-X_wbcd <- wbcd_n
+# Predictor:
+X <- Smarket[-ncol(Smarket)]
+# Predict:
+Y <- Smarket[ncol(Smarket)]
+Y <- unlist(Y)
 ```
 
 
@@ -267,10 +238,271 @@ source("./codes/knn_fun_parallel.R")
 ```
 
 ```{r}
+minimum_sample_knn(X = X, Y = Y,
+                  p_vec = 1:99/100,
+                  thr_acc = 0.85,
+                  n.cores = 1)
+```
+
+
+## Winsconsin breast cancer dataset, normalized
+
+
+```{r}
+# Imports:
+library(caret)
+library(foreach)
+source("./codes/cohen_kappa_fun.R")
+source("./codes/CI_MinimumSampleSize_fun.R")
+source("./codes/fit_acc_fun.R")
+```
+
+```{r}
+# ML algorithms:
+source("./codes/knn_fun_parallel.R")
+source("./codes/logistic_regression_fun_v2_parallel.R")
+source("./codes/nb_fun_parallel.R")
+source("./codes/rf_fun_parallel.R")
+```
+
+```{r}
+# Here we normalized the data of the
+# Wisconsin breast cancer:
+# wbcd <- read.csv("./data/classification/wisc_bc_data.csv",
+#                  stringsAsFactors = FALSE)
+# # id column provides no info, so we remove it:
+# wbcd <- wbcd[-1]
+# 
+# # label diagnosis column:
+# wbcd$diagnosis<- factor(wbcd$diagnosis,
+#                         levels = c("B", "M"),
+#                         labels = c("Benign", "Malignant")
+#                         )
+# 
+# # Function for normalization:
+# normalize <- function(x) {
+# return ((x - min(x)) / (max(x) - min(x)))
+# }
+# 
+# # create new df with normalized numerical columns:
+# wbcd_n <- as.data.frame(lapply(wbcd[2:31], normalize))
+# 
+# # add diagnosis column to the end:
+# wbcd_n["diagnosis"] <- wbcd[,1]
+
+# # Save normalized df as csv:
+# write.csv(x = wbcd_n,file = "./data/classification/wbcd_normalized.csv",quote = T,row.names = F,col.names = T)
+```
+
+```{r}
+wbcd_n <- read.csv("./data/classification/wbcd_normalized.csv",header = T,stringsAsFactors = T)
+# head(wbcd_n)
+```
+
+
+```{r}
+# Variable to predict:
+Y_wbcd_n <- wbcd_n[,ncol(wbcd_n)]
+# Variables to use as predictors:
+X_wbcd_n <- wbcd_n[,-ncol(wbcd_n)]
+```
+
+### kNN
+
+
+```{r}
 system.time(
-minimum_sample_knn(X = X_wbcd, Y = Y_wbcd,
+minimum_sample_knn(X = X_wbcd_n, Y = Y_wbcd_n,
                   p_vec = 1:99/100,
                   thr_acc = 0.95,
                   n.cores = 1)
 )
 ```
+
+
+
+
+### Logistic regression
+
+```{r}
+system.time(
+  minimum_sample_logistic_v2_parallel(X_wbcd_n,
+                                      Y_wbcd_n,
+                                      p_vec = 1:99/100, 
+                                      thr_acc = 0.95, 
+                                      n.cores = 1
+                                      )
+)
+```
+
+
+
+### Naive Bayes
+
+```{r}
+system.time(
+minimum_sample_naivebayes(X = X_wbcd_n, Y = Y_wbcd_n,
+                  p_vec = 1:99/100,
+                  thr_acc = 0.925,
+                  n.cores = 1)
+)
+```
+
+
+
+### Random forest
+
+
+```{r}
+system.time(
+minimum_sample_rf_parallel(X = X_wbcd_n, Y = Y_wbcd_n,
+                  p_vec = 1:99/100,
+                  thr_acc = 0.95,
+                  n.cores = 8)
+)
+```
+
+
+
+
+
+## Winsconsin breast cancer dataset, z-score standarization
+
+
+```{r}
+# Imports:
+library(caret)
+library(foreach)
+source("./codes/cohen_kappa_fun.R")
+source("./codes/CI_MinimumSampleSize_fun.R")
+source("./codes/fit_acc_fun.R")
+```
+
+```{r}
+# ML algorithms:
+source("./codes/knn_fun_parallel.R")
+source("./codes/logistic_regression_fun_v2_parallel.R")
+source("./codes/nb_fun_parallel.R")
+source("./codes/rf_fun_parallel.R")
+```
+
+```{r}
+# Here we normalized the data of the
+# Wisconsin breast cancer:
+# wbcd <- read.csv("./data/classification/wisc_bc_data.csv",
+#                  stringsAsFactors = FALSE)
+# # id column provides no info, so we remove it:
+# wbcd <- wbcd[-1]
+# 
+# # label diagnosis column:
+# wbcd$diagnosis<- factor(wbcd$diagnosis,
+#                         levels = c("B", "M"),
+#                         labels = c("Benign", "Malignant")
+#                         )
+# 
+# # create new df with normalized numerical columns:
+# wbcd_z <- as.data.frame(scale(wbcd[2:31]))
+# 
+# # add diagnosis column to the end:
+# wbcd_z["diagnosis"] <- wbcd[,1]
+# 
+# # # Save z-transformed df as csv:
+# write.csv(x = wbcd_z,file = "./data/classification/wbcd_z.csv",quote = T,row.names = F,col.names = T)
+```
+
+```{r}
+wbcd_z <- read.csv("./data/classification/wbcd_normalized.csv",header = T,stringsAsFactors = T)
+# head(wbcd_n)
+```
+
+
+```{r}
+# Variable to predict:
+Y_wbcd_z <- wbcd_z[,ncol(wbcd_z)]
+# Variables to use as predictors:
+X_wbcd_z <- wbcd_z[,-ncol(wbcd_z)]
+```
+
+### kNN
+
+
+```{r}
+system.time(
+minimum_sample_knn(X = X_wbcd_z, Y = Y_wbcd_z,
+                  p_vec = 1:99/100,
+                  thr_acc = 0.95,
+                  n.cores = 1)
+)
+```
+
+
+
+
+### Logistic regression
+
+```{r}
+system.time(
+  minimum_sample_logistic_v2_parallel(X_wbcd_z,
+                                      Y_wbcd_z,
+                                      p_vec = 1:99/100, 
+                                      thr_acc = 0.95, 
+                                      n.cores = 1
+                                      )
+)
+```
+
+
+
+### Naive Bayes
+
+```{r}
+system.time(
+minimum_sample_naivebayes(X = X_wbcd_z, 
+                          Y = Y_wbcd_z,
+                          p_vec = 1:99/100,
+                          thr_acc = 0.925,
+                          n.cores = 1)
+)
+```
+
+
+
+### Random forest
+
+
+```{r}
+system.time(
+minimum_sample_rf_parallel(X = X_wbcd_z, 
+                           Y = Y_wbcd_z,
+                  p_vec = 1:99/100,
+                  thr_acc = 0.95,
+                  n.cores = 8)
+)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
