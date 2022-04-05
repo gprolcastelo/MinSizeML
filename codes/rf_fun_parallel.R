@@ -90,7 +90,7 @@ minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
   # Create dataframe with saved vectors:
   df_acc_cohen <- data.frame(x_foreach, row.names = NULL)
   names(df_acc_cohen) <- c("training_set_size","acc_vec","cohen_vec")
-  
+  # print(head(df_acc_cohen))
   # Fit non-linear regression to get the accuracy fit.
   # Formula given by Figueroa et al 2012
   fit_accuracy <- nls(acc_vec~(1-a)-b*training_set_size^c,
@@ -162,5 +162,9 @@ minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
   print(CI_vec$c)
   print("CI for minimum sample size: d)")
   print(CI_vec$d)
+  
+  return_info <- list("Nmin" = min_sam_size, "CI" = CI_vec, "df"= df_acc_cohen, "coeffs" = c(a_fit,b_fit,c_fit))
+  
+  return(return_info)
   
 }

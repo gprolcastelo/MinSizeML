@@ -357,7 +357,7 @@ minimum_sample_naivebayes(X = X_wbcd_n, Y = Y_wbcd_n,
 system.time(
 minimum_sample_rf_parallel(X = X_wbcd_n, Y = Y_wbcd_n,
                   p_vec = 1:99/100,
-                  thr_acc = 0.95,
+                  thr_acc = 0.9,
                   n.cores = 8)
 )
 ```
@@ -378,6 +378,8 @@ source("./codes/CI_MinimumSampleSize_fun.R")
 source("./codes/fit_acc_fun.R")
 ```
 
+
+
 ```{r}
 # ML algorithms:
 source("./codes/knn_fun_parallel.R")
@@ -385,6 +387,8 @@ source("./codes/logistic_regression_fun_v2_parallel.R")
 source("./codes/nb_fun_parallel.R")
 source("./codes/rf_fun_parallel.R")
 ```
+
+
 
 ```{r}
 # Here we normalized the data of the
@@ -410,13 +414,11 @@ source("./codes/rf_fun_parallel.R")
 # write.csv(x = wbcd_z,file = "./data/classification/wbcd_z.csv",quote = T,row.names = F,col.names = T)
 ```
 
+
+
 ```{r}
+# Data:
 wbcd_z <- read.csv("./data/classification/wbcd_normalized.csv",header = T,stringsAsFactors = T)
-# head(wbcd_n)
-```
-
-
-```{r}
 # Variable to predict:
 Y_wbcd_z <- wbcd_z[,ncol(wbcd_z)]
 # Variables to use as predictors:
@@ -428,13 +430,16 @@ X_wbcd_z <- wbcd_z[,-ncol(wbcd_z)]
 
 ```{r}
 system.time(
-minimum_sample_knn(X = X_wbcd_z, Y = Y_wbcd_z,
+output_knn <- minimum_sample_knn(X = X_wbcd_z, Y = Y_wbcd_z,
                   p_vec = 1:99/100,
                   thr_acc = 0.95,
                   n.cores = 1)
 )
 ```
 
+```{r}
+output_knn
+```
 
 
 
@@ -442,7 +447,7 @@ minimum_sample_knn(X = X_wbcd_z, Y = Y_wbcd_z,
 
 ```{r}
 system.time(
-  minimum_sample_logistic_v2_parallel(X_wbcd_z,
+output_logreg <- minimum_sample_logistic_v2_parallel(X_wbcd_z,
                                       Y_wbcd_z,
                                       p_vec = 1:99/100, 
                                       thr_acc = 0.95, 
@@ -451,20 +456,28 @@ system.time(
 )
 ```
 
+```{r}
+output_logreg
+```
+
 
 
 ### Naive Bayes
 
 ```{r}
 system.time(
-minimum_sample_naivebayes(X = X_wbcd_z, 
+output_nb <- minimum_sample_naivebayes(X = X_wbcd_z, 
                           Y = Y_wbcd_z,
                           p_vec = 1:99/100,
-                          thr_acc = 0.925,
+                          thr_acc = 0.9,
                           n.cores = 1)
 )
 ```
 
+
+```{r}
+output_nb
+```
 
 
 ### Random forest
@@ -472,15 +485,18 @@ minimum_sample_naivebayes(X = X_wbcd_z,
 
 ```{r}
 system.time(
-minimum_sample_rf_parallel(X = X_wbcd_z, 
-                           Y = Y_wbcd_z,
-                  p_vec = 1:99/100,
-                  thr_acc = 0.95,
-                  n.cores = 8)
+output_rf <- minimum_sample_rf_parallel(X = X_wbcd_z, 
+                                        Y = Y_wbcd_z,
+                                        p_vec = 1:99/100,
+                                        thr_acc = 0.95,
+                                        n.cores = 8)
 )
 ```
 
 
+```{r}
+output_rf
+```
 
 
 

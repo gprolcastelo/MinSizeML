@@ -153,4 +153,7 @@ minimum_sample_knn <- function(X,Y,p_vec,thr_acc,n.cores){
   print("CI for minimum sample size: d)")
   print(CI_vec$d)
   
+  return_info <- list("Nmin" = min_sam_size, "CI" = CI_vec, "df"= df_acc_cohen, "coeffs" = c(a_fit,b_fit,c_fit))
+  
+  return(return_info)
 }
