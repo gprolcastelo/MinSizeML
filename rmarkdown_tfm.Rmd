@@ -210,7 +210,7 @@ minimum_sample_naivebayes(X = X, Y = Y,
 )
 ```
 
-## kNN, paralelization
+## kNN
 
 ```{r}
 # Imports:
@@ -220,17 +220,47 @@ source("./codes/cohen_kappa_fun.R")
 source("./codes/CI_MinimumSampleSize_fun.R")
 source("./codes/fit_acc_fun.R")
 # Data:
-require(ISLR)
-attach(Smarket) # attach allows you to look up in R variables within a dataframe
+# require(ISLR)
+# attach(Smarket) # attach allows you to look up in R variables within a dataframe
 ```
 
 ```{r}
-# Predictor:
-X <- Smarket[-ncol(Smarket)]
-# Predict:
-Y <- Smarket[ncol(Smarket)]
-Y <- unlist(Y)
+# # Predictor:
+# X <- Smarket[-ncol(Smarket)]
+# # Predict:
+# Y <- Smarket[ncol(Smarket)]
+# Y <- unlist(Y)
 ```
+
+```{r}
+# Wisconsin breast cancer data:
+wbcd <- read.csv("./data/classification/wisc_bc_data.csv", 
+                 stringsAsFactors = FALSE)
+# id column provides no info, so we remove it:
+wbcd <- wbcd[-1]
+
+# label diagnosis column:
+wbcd$diagnosis<- factor(wbcd$diagnosis, 
+                        levels = c("B", "M"),
+                        labels = c("Benign", "Malignant")
+                        )
+
+# Function for normalization:
+normalize <- function(x) {
+return ((x - min(x)) / (max(x) - min(x)))
+}
+
+# create new df with normalized numerical columns:
+wbcd_n <- as.data.frame(lapply(wbcd[2:31], normalize))
+```
+
+```{r}
+# Variable to predict:
+Y_wbcd <- wbcd[,1]
+# Variables to use as predictors:
+X_wbcd <- wbcd_n
+```
+
 
 ```{r}
 source("./codes/knn_fun_parallel.R")
@@ -238,9 +268,9 @@ source("./codes/knn_fun_parallel.R")
 
 ```{r}
 system.time(
-minimum_sample_knn(X = X, Y = Y,
+minimum_sample_knn(X = X_wbcd, Y = Y_wbcd,
                   p_vec = 1:99/100,
-                  thr_acc = 0.85,
+                  thr_acc = 0.95,
                   n.cores = 1)
 )
 ```
