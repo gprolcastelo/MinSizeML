@@ -149,15 +149,15 @@ library(foreach)
 source("./codes/cohen_kappa_fun.R")
 source("./codes/CI_MinimumSampleSize_fun.R")
 source("./codes/fit_acc_fun.R")
-# Data:
-require(ISLR)
-attach(Smarket) # attach allows you to look up in R variables within a dataframe
 ```
 
 ```{r}
+# Data:
+require(ISLR)
+attach(Smarket) # attach allows you to look up in R variables within a dataframe
 # Predictor:
 X <- Smarket[-ncol(Smarket)]
-# Predict:
+# Outcome:
 Y <- Smarket[ncol(Smarket)]
 Y <- unlist(Y)
 ```
@@ -294,13 +294,12 @@ source("./codes/rf_fun_parallel.R")
 # write.csv(x = wbcd_n,file = "./data/classification/wbcd_normalized.csv",quote = T,row.names = F,col.names = T)
 ```
 
+
+
 ```{r}
+# Data:
 wbcd_n <- read.csv("./data/classification/wbcd_normalized.csv",header = T,stringsAsFactors = T)
 # head(wbcd_n)
-```
-
-
-```{r}
 # Variable to predict:
 Y_wbcd_n <- wbcd_n[,ncol(wbcd_n)]
 # Variables to use as predictors:
@@ -343,7 +342,7 @@ system.time(
 system.time(
 minimum_sample_naivebayes(X = X_wbcd_n, Y = Y_wbcd_n,
                   p_vec = 1:99/100,
-                  thr_acc = 0.925,
+                  thr_acc = 0.95,
                   n.cores = 1)
 )
 ```
@@ -357,7 +356,7 @@ minimum_sample_naivebayes(X = X_wbcd_n, Y = Y_wbcd_n,
 system.time(
 minimum_sample_rf_parallel(X = X_wbcd_n, Y = Y_wbcd_n,
                   p_vec = 1:99/100,
-                  thr_acc = 0.9,
+                  thr_acc = 0.95,
                   n.cores = 8)
 )
 ```
@@ -432,7 +431,7 @@ X_wbcd_z <- wbcd_z[,-ncol(wbcd_z)]
 system.time(
 output_knn <- minimum_sample_knn(X = X_wbcd_z, Y = Y_wbcd_z,
                   p_vec = 1:99/100,
-                  thr_acc = 0.95,
+                  thr_acc = 0.9,
                   n.cores = 1)
 )
 ```
@@ -450,7 +449,7 @@ system.time(
 output_logreg <- minimum_sample_logistic_v2_parallel(X_wbcd_z,
                                       Y_wbcd_z,
                                       p_vec = 1:99/100, 
-                                      thr_acc = 0.95, 
+                                      thr_acc = 0.9, 
                                       n.cores = 1
                                       )
 )
@@ -488,7 +487,7 @@ system.time(
 output_rf <- minimum_sample_rf_parallel(X = X_wbcd_z, 
                                         Y = Y_wbcd_z,
                                         p_vec = 1:99/100,
-                                        thr_acc = 0.95,
+                                        thr_acc = 0.9,
                                         n.cores = 8)
 )
 ```
@@ -501,11 +500,51 @@ output_rf
 
 
 
+## Predicting age from DNA methylation
+
+```{r}
+# Imports:
+library(caret)
+library(foreach)
+source("./codes/cohen_kappa_fun.R")
+source("./codes/CI_MinimumSampleSize_fun.R")
+source("./codes/fit_acc_fun.R")
+```
 
 
 
+```{r}
+# ML algorithms:
+source("./codes/knn_fun_parallel.R")
+source("./codes/logistic_regression_fun_v2_parallel.R")
+source("./codes/nb_fun_parallel.R")
+source("./codes/rf_fun_parallel.R")
+```
 
 
+
+```{r}
+# file path for CpG methylation and age
+fileMethAge=system.file("extdata",
+                      "CpGmeth2Age.rds",
+                      package="compGenomRData")
+
+# read methylation-age table
+ameth=readRDS(fileMethAge)
+
+# The CpGs that have low variation are not likely to have any association with age; they could simply be technical variation of the experiment. We will remove CpGs that have less than 0.1 standard deviation.
+
+ameth=ameth[,c(TRUE,matrixStats::colSds(as.matrix(ameth[,-1]))>0.1)]
+```
+
+
+
+```{r}
+# Predictor:
+X_ameth <- ameth[,-1]
+# Predicted:
+Y_ameth <- ameth[,1]
+```
 
 
 

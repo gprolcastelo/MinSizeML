@@ -5,7 +5,7 @@
 minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
   
   # For paralelization with foreach:
-  n.cores <- parallel::detectCores() - 2
+  # n.cores <- parallel::detectCores() - 2
 
   #create the cluster
   my.cluster <- parallel::makeCluster(

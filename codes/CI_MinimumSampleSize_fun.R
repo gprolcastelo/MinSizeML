@@ -15,30 +15,30 @@ CI_MinimumSampleSize_fun <- function(tr_set_size,prediction.ci,thr_acc,min_sam_s
                                      which.min(abs(predictY.lw-thr_acc))
   )]
   
-  # b) Geometry: find min_sam_size, then corresponding acc for the upper and lower fit,
-  # then infer from same formula used for min_sam_size
-  
-  # b).1. Upper accuracy: corresponds to the value of predictY.up closest to min_sam_size
-  upper_acc <- predictY.up[which.min(abs(tr_set_size-min_sam_size))]
-  # If the upper accuracy is lower than given thr_acc, then get the next index:
-  if (upper_acc<thr_acc) {
-    upper_acc <- predictY.up[which.min(abs(tr_set_size-min_sam_size))+1]
-  }
-  # Fit minimum sample size corresponding to upper accuracy (upper bound)
-  UB <- fit_acc_fun(a_fit,b_fit,c_fit,upper_acc)
-  
-  # b).2. Lower accuracy: corresponds to the value of predictY.lw closest to min_sam_size
-  lower_acc <- predictY.lw[which.min(abs(tr_set_size-min_sam_size))]
-  # If the lower accuracy is higher than given thr_acc, then get the previous index:
-  if (lower_acc>thr_acc) {
-    lower_acc <- predictY.lw[which.min(abs(tr_set_size-min_sam_size))-1]
-  }
-  # Fit minimum sample size corresponding to lower accuracy (lower bound)
-  LB <- fit_acc_fun(a_fit,b_fit,c_fit,lower_acc)
-  
-  # b).3. CI: vector of lower and upper bounds:
-  CI_min_sam_size_b <- c(LB,UB)
-  
+  # # b) Geometry: find min_sam_size, then corresponding acc for the upper and lower fit,
+  # # then infer from same formula used for min_sam_size
+  # 
+  # # b).1. Upper accuracy: corresponds to the value of predictY.up closest to min_sam_size
+  # upper_acc <- predictY.up[which.min(abs(tr_set_size-min_sam_size))]
+  # # If the upper accuracy is lower than given thr_acc, then get the next index:
+  # if (upper_acc<thr_acc) {
+  #   upper_acc <- predictY.up[which.min(abs(tr_set_size-min_sam_size))+1]
+  # }
+  # # Fit minimum sample size corresponding to upper accuracy (upper bound)
+  # UB <- fit_acc_fun(a_fit,b_fit,c_fit,upper_acc)
+  # 
+  # # b).2. Lower accuracy: corresponds to the value of predictY.lw closest to min_sam_size
+  # lower_acc <- predictY.lw[which.min(abs(tr_set_size-min_sam_size))]
+  # # If the lower accuracy is higher than given thr_acc, then get the previous index:
+  # if (lower_acc>thr_acc) {
+  #   lower_acc <- predictY.lw[which.min(abs(tr_set_size-min_sam_size))-1]
+  # }
+  # # Fit minimum sample size corresponding to lower accuracy (lower bound)
+  # LB <- fit_acc_fun(a_fit,b_fit,c_fit,lower_acc)
+  # 
+  # # b).3. CI: vector of lower and upper bounds:
+  # CI_min_sam_size_b <- c(LB,UB)
+  # 
   # c) Defining a w:
   # thr_acc+c(-1,1)*0.005
   CI_min_sam_size_c <- fit_acc_fun(a_fit,b_fit,c_fit,
@@ -76,7 +76,7 @@ CI_MinimumSampleSize_fun <- function(tr_set_size,prediction.ci,thr_acc,min_sam_s
   # d).3. CI: vector of lower and upper bounds:
   CI_min_sam_size_d <- c(LB_d,UB_d)
   
-  return_CI <- list("a" = CI_min_sam_size_a, "b" = CI_min_sam_size_b, "c" = CI_min_sam_size_c, "d" = CI_min_sam_size_d)
+  return_CI <- list("a" = CI_min_sam_size_a, "b" = NULL, "c" = CI_min_sam_size_c, "d" = CI_min_sam_size_d)
   
   return(return_CI)
   
