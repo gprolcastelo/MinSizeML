@@ -5,7 +5,7 @@
 minimum_sample_naivebayes <- function(X,Y,p_vec,thr_acc,n.cores){
   
   # For paralelization with foreach:
-  n.cores <- parallel::detectCores() - 2
+  # n.cores <- parallel::detectCores() - 2
   
   #create the cluster
   my.cluster <- parallel::makeCluster(
@@ -144,17 +144,19 @@ minimum_sample_naivebayes <- function(X,Y,p_vec,thr_acc,n.cores){
   print(min_sam_size)
   
   
-  print("CI for minimum sample size: a)")
-  print(CI_vec$a)
-  print("CI for minimum sample size: b)")
-  print(CI_vec$b)
-  print("CI for minimum sample size: c)")
-  print(CI_vec$c)
+  # print("CI for minimum sample size: a)")
+  # print(CI_vec$a)
+  # print("CI for minimum sample size: b)")
+  # print(CI_vec$b)
+  # print("CI for minimum sample size: c)")
+  # print(CI_vec$c)
   print("CI for minimum sample size: d)")
-  print(CI_vec$d)
+  print(CI_vec)
   
-  return_info <- list("Nmin" = min_sam_size, "CI" = CI_vec, "df"= df_acc_cohen, "coeffs" = c(a_fit,b_fit,c_fit))
-  
+  return_info <- list("Nmin" = min_sam_size, 
+                      "CI" = CI_vec, 
+                      "df"= df_acc_cohen, 
+                      "coeffs" = c(a_fit,b_fit,c_fit))
   return(return_info)
   
 }

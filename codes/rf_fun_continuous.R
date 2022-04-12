@@ -2,11 +2,11 @@
 # Random Forest #
 ########################
 
-minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
+minimum_sample_rf_continuous <- function(X,Y,p_vec,thr_rmse,n.cores){
   
   # For paralelization with foreach:
   # n.cores <- parallel::detectCores() - 2
-
+  
   #create the cluster
   my.cluster <- parallel::makeCluster(
     n.cores,
@@ -58,16 +58,19 @@ minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
     testY <- Y[-trainIndex]
     
     # Create grid for the train() function
-    rfGrid <- expand.grid(mtry=round(c(2, sqrt(ncol(trainX))/2,
+    rfGrid <- expand.grid(mtry=round(c(2, 
+                                       sqrt(ncol(trainX))/2,
                                        seq(sqrt(ncol(trainX)), 
                                            ncol(trainX), 
-                                           length.out = 4))))
+                                           length.out = 4))
+                                     )
+                          )
     
     # Training data:
     rfFit <- train(x = trainX, y = trainY,
                    method = "rf", 
                    trControl = train_control,
-                   metric = "Kappa",
+                   metric = "RMSE",
                    ## This last option is actually one
                    ## for gbm() that passes through
                    verbose = TRUE, 
@@ -80,8 +83,8 @@ minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
     
     # Return when using paralelization with foreach:
     return(c(length(trainIndex),  # save size of training set
-             mean(predict_rf == testY),  # save accuracy
-             cohen_kappa(predict_rf,testY)  # save Cohen's kappa
+             RMSE(pred = predict_rf, obs = testY),  # save RMSE
+             MAE(pred = predict_rf, obs = testY)
              )
            )
     
@@ -89,31 +92,31 @@ minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
   
   # Create dataframe with saved vectors:
   df_acc_cohen <- data.frame(x_foreach, row.names = NULL)
-  names(df_acc_cohen) <- c("training_set_size","acc_vec","cohen_vec")
+  names(df_acc_cohen) <- c("training_set_size","rmse_vec","mae_vec")
   # print(head(df_acc_cohen))
   # Fit non-linear regression to get the accuracy fit.
   # Formula given by Figueroa et al 2012
-  fit_accuracy <- nls(acc_vec~(1-a)-b*training_set_size^c,
-                      data = df_acc_cohen, 
-                      start = list(a=0.5,b=0.5,c=-0.5),
-                      control = nls.control(maxiter = 100, tol = 1e-8),
-                      algorithm = "port"
-  )  
+  # fit_accuracy <- nls(acc_vec~(1-a)-b*training_set_size^c,
+  #                     data = df_acc_cohen, 
+  #                     start = list(a=0.5,b=0.5,c=-0.5),
+  #                     control = nls.control(maxiter = 100, tol = 1e-8),
+  #                     algorithm = "port"
+  # )  
   # Coefficients: 
-  a_fit <- summary(fit_accuracy)$coefficients[,1][[1]]
-  b_fit <- summary(fit_accuracy)$coefficients[,1][[2]]
-  c_fit <- summary(fit_accuracy)$coefficients[,1][[3]]
+  # a_fit <- summary(fit_accuracy)$coefficients[,1][[1]]
+  # b_fit <- summary(fit_accuracy)$coefficients[,1][[2]]
+  # c_fit <- summary(fit_accuracy)$coefficients[,1][[3]]
   
   # Confidence intervals for fitted curve (from Figueroa 2012 appendix):
-  se.fit <- sqrt(apply(fit_accuracy$m$gradient(),
-                       1,
-                       function(x) sum(vcov(fit_accuracy)*outer(x,x)))
-  );
-  prediction.ci <- predict(fit_accuracy,x=df_acc_cohen$training_set_size) + outer(se.fit,qnorm(c(.5, .025,.975)))
-  
-  predictY<-prediction.ci[,1];
-  predictY.lw<-prediction.ci[,2];
-  predictY.up<-prediction.ci[,3];
+  # se.fit <- sqrt(apply(fit_accuracy$m$gradient(),
+  #                      1,
+  #                      function(x) sum(vcov(fit_accuracy)*outer(x,x)))
+  # );
+  # prediction.ci <- predict(fit_accuracy,x=df_acc_cohen$training_set_size) + outer(se.fit,qnorm(c(.5, .025,.975)))
+  # 
+  # predictY<-prediction.ci[,1];
+  # predictY.lw<-prediction.ci[,2];
+  # predictY.up<-prediction.ci[,3];
   
   # Plot accuracy vs size of training set.
   # Circles = calculated values of accuracy given a sample size.
@@ -121,37 +124,41 @@ minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
   
   # # Calculated accuracy vs sample size
   plot(df_acc_cohen$training_set_size,
-       df_acc_cohen$acc_vec,
-       xlab = "Training set size", ylab = "Accuracy of prediction")
+       df_acc_cohen$rmse_vec,
+       xlab = "Training set size", ylab = "RMSE")
+  # # Calculated accuracy vs sample size
+  plot(df_acc_cohen$training_set_size,
+       df_acc_cohen$mae_vec,
+       xlab = "Training set size", ylab = "MAE")
   # # Middle line:
-  lines(df_acc_cohen$training_set_size,
-        predict(fit_accuracy,df_acc_cohen$training_set_size))
+  # lines(df_acc_cohen$training_set_size,
+  #       predict(fit_accuracy,df_acc_cohen$training_set_size))
   
-  # # Upper line:
-  lines(df_acc_cohen$training_set_size,
-        predictY.up, col = "blue")
-  
-  # # Lower line:
-  lines(df_acc_cohen$training_set_size,
-        predictY.lw, col = "red")
+  # # # Upper line:
+  # lines(df_acc_cohen$training_set_size,
+  #       predictY.up, col = "blue")
+  # 
+  # # # Lower line:
+  # lines(df_acc_cohen$training_set_size,
+  #       predictY.lw, col = "red")
   
   # Minimum sample size calculation:
   # Simply with the formula, solving for new_data:
-  min_sam_size <- fit_acc_fun(a_fit,b_fit,c_fit,thr_acc)
+  # min_sam_size <- fit_acc_fun(a_fit,b_fit,c_fit,thr_acc)
   
   # Confidence interval for minimum sample size:
-  CI_vec <- CI_MinimumSampleSize_fun(df_acc_cohen$training_set_size,
-                                     prediction.ci,
-                                     thr_acc,
-                                     min_sam_size,
-                                     fit_accuracy,
-                                     w=0.005)
+  # CI_vec <- CI_MinimumSampleSize_fun(df_acc_cohen$training_set_size,
+  #                                    prediction.ci,
+  #                                    thr_acc,
+  #                                    min_sam_size,
+  #                                    fit_accuracy,
+  #                                    w=0.005)
   
   # Print results.
-  print("For minimum accuracy:")
-  print(thr_acc)
-  print("Minimum sample size:")
-  print(min_sam_size)
+  # print("For minimum accuracy:")
+  # print(thr_acc)
+  # print("Minimum sample size:")
+  # print(min_sam_size)
   
   
   # print("CI for minimum sample size: a)")
@@ -160,13 +167,15 @@ minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
   # print(CI_vec$b)
   # print("CI for minimum sample size: c)")
   # print(CI_vec$c)
-  print("CI for minimum sample size: d)")
-  print(CI_vec)
+  # print("CI for minimum sample size: d)")
+  # print(CI_vec)
+  # 
+  # return_info <- list("Nmin" = min_sam_size, 
+  #                     "CI" = CI_vec, 
+  #                     "df"= df_acc_cohen, 
+  #                     "coeffs" = c(a_fit,b_fit,c_fit))
+  # return(return_info)
   
-  return_info <- list("Nmin" = min_sam_size, 
-                      "CI" = CI_vec, 
-                      "df"= df_acc_cohen, 
-                      "coeffs" = c(a_fit,b_fit,c_fit))
-  return(return_info)
+  return(df_acc_cohen)
   
 }

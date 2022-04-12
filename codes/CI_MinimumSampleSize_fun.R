@@ -11,9 +11,9 @@ CI_MinimumSampleSize_fun <- function(tr_set_size,prediction.ci,thr_acc,min_sam_s
   c_fit <- summary(fit_accuracy)$coefficients[,1][[3]]
   
   # a) Finding the same accuracy on the other two curves: 
-  CI_min_sam_size_a <- tr_set_size[c(which.min(abs(predictY.up-thr_acc)),
-                                     which.min(abs(predictY.lw-thr_acc))
-  )]
+  # CI_min_sam_size_a <- tr_set_size[c(which.min(abs(predictY.up-thr_acc)),
+  #                                    which.min(abs(predictY.lw-thr_acc))
+  # )]
   
   # # b) Geometry: find min_sam_size, then corresponding acc for the upper and lower fit,
   # # then infer from same formula used for min_sam_size
@@ -41,8 +41,8 @@ CI_MinimumSampleSize_fun <- function(tr_set_size,prediction.ci,thr_acc,min_sam_s
   # 
   # c) Defining a w:
   # thr_acc+c(-1,1)*0.005
-  CI_min_sam_size_c <- fit_acc_fun(a_fit,b_fit,c_fit,
-                                   thr_acc+c(-1,1)*w)
+  # CI_min_sam_size_c <- fit_acc_fun(a_fit,b_fit,c_fit,
+  #                                  thr_acc+c(-1,1)*w)
   
   # d) fitting upper and lower curves:
   
@@ -76,8 +76,8 @@ CI_MinimumSampleSize_fun <- function(tr_set_size,prediction.ci,thr_acc,min_sam_s
   # d).3. CI: vector of lower and upper bounds:
   CI_min_sam_size_d <- c(LB_d,UB_d)
   
-  return_CI <- list("a" = CI_min_sam_size_a, "b" = NULL, "c" = CI_min_sam_size_c, "d" = CI_min_sam_size_d)
+  #return_CI <- list("a" = CI_min_sam_size_a, "b" = NULL, "c" = CI_min_sam_size_c, "d" = CI_min_sam_size_d)
   
-  return(return_CI)
+  return(CI_min_sam_size_d)
   
 }

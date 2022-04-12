@@ -10,72 +10,122 @@ date: '2022-03-25'
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 ```
 
-## Logistic regression with glm
+## Smarket
+
+```{r}
+# Imports:
+library(caret)
+library(foreach)
+source("./codes/cohen_kappa_fun.R")
+source("./codes/CI_MinimumSampleSize_fun.R")
+source("./codes/fit_acc_fun.R")
+```
+
+```{r}
+# ML algorithms:
+source("./codes/knn_fun_parallel.R")
+source("./codes/logistic_regression_fun_v2_parallel.R")
+source("./codes/nb_fun_parallel.R")
+source("./codes/rf_fun_parallel.R")
+```
+
 
 Data & param:
 
 ```{r}
-# Imports:
-library(caret)
-source("./codes/cohen_kappa_fun.R")
-source("./codes/CI_MinimumSampleSize_fun.R")
-source("./codes/fit_acc_fun.R")
 # Data:
 require(ISLR)
-attach(Smarket) # attach allows you to look up in R variables within a dataframe
-```
-
-```{r}
+#attach(Smarket) # attach allows you to look up in R variables within a dataframe
 # Predictor:
-X <- Smarket[-ncol(Smarket)]
+X_market <- Smarket[-ncol(Smarket)]
 # Predict:
-Y <- Smarket[ncol(Smarket)]
-Y <- unlist(Y)
+Y_market <- Smarket[ncol(Smarket)]
+Y_market <- unlist(Y_market)
 ```
 
-```{r}
-source("./codes/logistic_regression_fun.R")
-```
+
+### kNN
+
 
 ```{r}
 system.time(
-MinSizeLogReg <- minimum_sample_logistic(X,Y,p_vec=1:99/100,thr_acc=0.95)
+minimum_sample_knn(X = X_market, 
+                   Y = Y_market,
+                   p_vec = 1:99/100,
+                   thr_acc = 0.9,
+                   n.cores = 1)
 )
-MinSizeLogReg
 ```
 
-## Logistic regression with train.
 
-```{r}
-# Imports:
-library(caret)
-source("./codes/cohen_kappa_fun.R")
-source("./codes/CI_MinimumSampleSize_fun.R")
-source("./codes/fit_acc_fun.R")
-# Data:
-require(ISLR)
-attach(Smarket) # attach allows you to look up in R variables within a dataframe
-```
 
-```{r}
-# Predictor:
-X <- Smarket[-ncol(Smarket)]
-# Predict:
-Y <- Smarket[ncol(Smarket)]
-Y <- unlist(Y)
-```
 
-```{r}
-source("./codes/logistic_regression_fun_v2.R")
-```
+### Logistic regression
 
 ```{r}
 system.time(
-minimum_sample_logistic_v2(X,Y,p_vec = 1:99/100, thr_acc = 0.95)
+  Smarket_logreg <- minimum_sample_logistic_v2_parallel(
+    X_market,
+    Y_market,
+    p_vec = 1:99/100, 
+    thr_acc = 0.9, 
+    n.cores = 1
+    )
 )
 ```
 
-## Logistic regression with train, and parallelization.
+```{r}
+fit_cohen <- nls(cohen_vec~(1-a)-b*training_set_size^c,
+                      data = Smarket_logreg$df, 
+                      start = list(a=0.5,b=0.5,c=-0.5),
+                      control = nls.control(maxiter = 100, tol = 1e-8),
+                      algorithm = "port"
+  )
+summary_fit_cohen <- summary(fit_cohen)
+# Scatter 
+plot(x = Smarket_logreg$df$training_set_size,
+     y = Smarket_logreg$df$cohen_vec,
+     xlab = "Training set size \n",
+     ylab = "Cohen's kappa",
+     sub = paste("Residual standard error:",
+                 round(summary_fit_cohen$sigma,
+                       digits = 5),
+                 sep = " ")
+     )
+# Fit:
+lines(Smarket_logreg$df$training_set_size,
+        predict(fit_cohen,Smarket_logreg$df$training_set_size))
+```
+
+
+### Naive Bayes
+
+```{r}
+system.time(
+minimum_sample_naivebayes(X = X_market, 
+                          Y = Y_market,
+                          p_vec = 1:99/100,
+                          thr_acc = 0.9,
+                          n.cores = 1)
+)
+```
+
+
+
+### Random forest
+
+
+```{r}
+system.time(
+minimum_sample_rf_parallel(X = X_market, 
+                           Y = Y_market,
+                           p_vec = 1:99/100,
+                           thr_acc = 0.9,
+                           n.cores = 8)
+)
+```
+
+## iris
 
 ```{r}
 # Imports:
@@ -84,164 +134,106 @@ library(foreach)
 source("./codes/cohen_kappa_fun.R")
 source("./codes/CI_MinimumSampleSize_fun.R")
 source("./codes/fit_acc_fun.R")
-# Data:
-require(ISLR)
-attach(Smarket) # attach allows you to look up in R variables within a dataframe
 ```
 
 ```{r}
-# Predictor:
-X <- Smarket[-ncol(Smarket)]
-# Predict:
-Y <- Smarket[ncol(Smarket)]
-Y <- unlist(Y)
-```
-
-```{r}
+# ML algorithms:
+source("./codes/knn_fun_parallel.R")
 source("./codes/logistic_regression_fun_v2_parallel.R")
-```
-
-```{r}
-system.time(
-minimum_sample_logistic_v2_parallel(X,Y,p_vec = 1:99/100, thr_acc = 0.95, n.cores = 8)
-)
-```
-
-## Random Forest, sequential.
-
-```{r}
-# Imports:
-library(caret)
-source("./codes/cohen_kappa_fun.R")
-source("./codes/CI_MinimumSampleSize_fun.R")
-source("./codes/fit_acc_fun.R")
-# Data:
-require(ISLR)
-attach(Smarket) # attach allows you to look up in R variables within a dataframe
-```
-
-```{r}
-# Predictor:
-X <- Smarket[-ncol(Smarket)]
-# Predict:
-Y <- Smarket[ncol(Smarket)]
-Y <- unlist(Y)
-```
-
-```{r}
-source("./codes/rf_fun.R")
-```
-
-```{r}
-system.time(
-minimum_sample_rf(X = X, Y = Y,
-                  p_vec = 1:99/100,
-                  thr_acc = 0.95)
-)
-```
-
-## Random forest, paralelization
-
-```{r}
-# Imports:
-library(caret)
-library(foreach)
-source("./codes/cohen_kappa_fun.R")
-source("./codes/CI_MinimumSampleSize_fun.R")
-source("./codes/fit_acc_fun.R")
-```
-
-```{r}
-# Data:
-require(ISLR)
-attach(Smarket) # attach allows you to look up in R variables within a dataframe
-# Predictor:
-X <- Smarket[-ncol(Smarket)]
-# Outcome:
-Y <- Smarket[ncol(Smarket)]
-Y <- unlist(Y)
-```
-
-```{r}
+source("./codes/nb_fun_parallel.R")
 source("./codes/rf_fun_parallel.R")
 ```
 
-```{r}
-system.time(
-minimum_sample_rf_parallel(X = X, Y = Y,
-                  p_vec = 1:99/100,
-                  thr_acc = 0.95,
-                  n.cores = 12)
-)
-```
 
-## Naive Bayes, paralelization
+Data & param:
 
 ```{r}
-# Imports:
-library(caret)
-library(foreach)
-source("./codes/cohen_kappa_fun.R")
-source("./codes/CI_MinimumSampleSize_fun.R")
-source("./codes/fit_acc_fun.R")
 # Data:
-require(ISLR)
-attach(Smarket) # attach allows you to look up in R variables within a dataframe
-```
-
-```{r}
+require(datasets)
+#attach(Smarket) # attach allows you to look up in R variables within a dataframe
 # Predictor:
-X <- Smarket[-ncol(Smarket)]
+X_iris <- iris[-ncol(iris)]
 # Predict:
-Y <- Smarket[ncol(Smarket)]
-Y <- unlist(Y)
+Y_iris <- iris[ncol(iris)]
+Y_iris <- unlist(Y_iris)
 ```
 
-```{r}
-source("./codes/nb_fun_parallel.R")
-```
+
+### kNN
+
 
 ```{r}
 system.time(
-minimum_sample_naivebayes(X = X, Y = Y,
-                  p_vec = 1:99/100,
-                  thr_acc = 0.95,
-                  n.cores = 1)
+iris_knn <- minimum_sample_knn(
+  X = X_iris, 
+  Y = Y_iris,
+  p_vec = 10:90/100,
+  thr_acc = 0.9,
+  n.cores = 1)
 )
 ```
 
-## kNN
+```{r}
+fit_cohen <- nls(cohen_vec~(1-a)-b*training_set_size^c,
+                      data = iris_knn$df, 
+                      start = list(a=0.5,b=0.5,c=-0.5),
+                      control = nls.control(maxiter = 100, tol = 1e-8),
+                      algorithm = "port"
+  )
+summary_fit_cohen <- summary(fit_cohen)
+# Scatter 
+plot(x = iris_knn$df$training_set_size,
+     y = iris_knn$df$cohen_vec,
+     xlab = "Training set size \n",
+     ylab = "Cohen's kappa",
+     sub = paste("Residual standard error:",
+                 round(summary_fit_cohen$sigma,
+                       digits = 5),
+                 sep = " ")
+     )
+# Fit:
+lines(iris_knn$df$training_set_size,
+        predict(fit_cohen,iris_knn$df$training_set_size))
+```
+
+
+
+
+### Random forest
+
 
 ```{r}
-# Imports:
-library(caret)
-library(foreach)
-source("./codes/cohen_kappa_fun.R")
-source("./codes/CI_MinimumSampleSize_fun.R")
-source("./codes/fit_acc_fun.R")
-# Data:
-require(ISLR)
-attach(Smarket) # attach allows you to look up in R variables within a dataframe
+system.time(
+iris_rf <-minimum_sample_rf_parallel(
+  X = X_iris, 
+  Y = Y_iris,
+  p_vec = 10:90/100,
+  thr_acc = 0.9,
+  n.cores = 1)
+)
 ```
 
 ```{r}
-# Predictor:
-X <- Smarket[-ncol(Smarket)]
-# Predict:
-Y <- Smarket[ncol(Smarket)]
-Y <- unlist(Y)
-```
-
-
-```{r}
-source("./codes/knn_fun_parallel.R")
-```
-
-```{r}
-minimum_sample_knn(X = X, Y = Y,
-                  p_vec = 1:99/100,
-                  thr_acc = 0.85,
-                  n.cores = 1)
+fit_cohen <- nls(cohen_vec~(1-a)-b*training_set_size^c,
+                      data = iris_logreg$df, 
+                      start = list(a=0.5,b=0.5,c=-0.5),
+                      control = nls.control(maxiter = 100, tol = 1e-8),
+                      algorithm = "port"
+  )
+summary_fit_cohen <- summary(fit_cohen)
+# Scatter 
+plot(x = Smarket_logreg$df$training_set_size,
+     y = Smarket_logreg$df$cohen_vec,
+     xlab = "Training set size \n",
+     ylab = "Cohen's kappa",
+     sub = paste("Residual standard error:",
+                 round(summary_fit_cohen$sigma,
+                       digits = 5),
+                 sep = " ")
+     )
+# Fit:
+lines(Smarket_logreg$df$training_set_size,
+        predict(fit_cohen,Smarket_logreg$df$training_set_size))
 ```
 
 
@@ -500,7 +492,7 @@ output_rf
 
 
 
-## Predicting age from DNA methylation
+## Predicting age from DNA methylation (continuous data prediction)
 
 ```{r}
 # Imports:
@@ -515,10 +507,7 @@ source("./codes/fit_acc_fun.R")
 
 ```{r}
 # ML algorithms:
-source("./codes/knn_fun_parallel.R")
-source("./codes/logistic_regression_fun_v2_parallel.R")
-source("./codes/nb_fun_parallel.R")
-source("./codes/rf_fun_parallel.R")
+source("./codes/rf_fun_continuous.R")
 ```
 
 
@@ -547,7 +536,19 @@ Y_ameth <- ameth[,1]
 ```
 
 
+### Random forest
 
+
+```{r}
+system.time(
+ameth_rf <- minimum_sample_rf_continuous(
+  X = X_ameth, 
+  Y = Y_ameth,
+  p_vec = 1:9/10,
+  thr_rmse = 10,
+  n.cores = 8)
+)
+```
 
 
 
