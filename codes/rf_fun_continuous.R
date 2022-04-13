@@ -2,7 +2,7 @@
 # Random Forest #
 ########################
 
-minimum_sample_rf_continuous <- function(X,Y,p_vec,thr_rmse,n.cores){
+minimum_sample_rf_continuous <- function(X,Y,p_vec,thr_R2,n.cores){
   
   # For paralelization with foreach:
   # n.cores <- parallel::detectCores() - 2
@@ -70,7 +70,7 @@ minimum_sample_rf_continuous <- function(X,Y,p_vec,thr_rmse,n.cores){
     rfFit <- train(x = trainX, y = trainY,
                    method = "rf", 
                    trControl = train_control,
-                   metric = "RMSE",
+                   metric = "Rsquared",
                    ## This last option is actually one
                    ## for gbm() that passes through
                    verbose = TRUE, 
@@ -84,7 +84,8 @@ minimum_sample_rf_continuous <- function(X,Y,p_vec,thr_rmse,n.cores){
     # Return when using paralelization with foreach:
     return(c(length(trainIndex),  # save size of training set
              RMSE(pred = predict_rf, obs = testY),  # save RMSE
-             MAE(pred = predict_rf, obs = testY)
+             MAE(pred = predict_rf, obs = testY),  # save MAE
+             R2(pred = predict_rf, obs = testY)  # save R^2
              )
            )
     
@@ -92,7 +93,7 @@ minimum_sample_rf_continuous <- function(X,Y,p_vec,thr_rmse,n.cores){
   
   # Create dataframe with saved vectors:
   df_acc_cohen <- data.frame(x_foreach, row.names = NULL)
-  names(df_acc_cohen) <- c("training_set_size","rmse_vec","mae_vec")
+  names(df_acc_cohen) <- c("training_set_size","rmse_vec","mae_vec","R2_vec")
   # print(head(df_acc_cohen))
   # Fit non-linear regression to get the accuracy fit.
   # Formula given by Figueroa et al 2012
@@ -130,6 +131,10 @@ minimum_sample_rf_continuous <- function(X,Y,p_vec,thr_rmse,n.cores){
   plot(df_acc_cohen$training_set_size,
        df_acc_cohen$mae_vec,
        xlab = "Training set size", ylab = "MAE")
+  # # Calculated accuracy vs sample size
+  plot(df_acc_cohen$training_set_size,
+       df_acc_cohen$R2_vec,
+       xlab = "Training set size", ylab = "R2")
   # # Middle line:
   # lines(df_acc_cohen$training_set_size,
   #       predict(fit_accuracy,df_acc_cohen$training_set_size))

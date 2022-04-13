@@ -2,7 +2,7 @@
 # Random Forest #
 ########################
 
-minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
+minimum_sample_rf_parallel <- function(X,Y,p_vec,param,thr_param,n.cores){
   
   # For paralelization with foreach:
   # n.cores <- parallel::detectCores() - 2
@@ -67,7 +67,7 @@ minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
     rfFit <- train(x = trainX, y = trainY,
                    method = "rf", 
                    trControl = train_control,
-                   metric = "Kappa",
+                   metric = param,
                    ## This last option is actually one
                    ## for gbm() that passes through
                    verbose = TRUE, 
@@ -93,12 +93,22 @@ minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
   # print(head(df_acc_cohen))
   # Fit non-linear regression to get the accuracy fit.
   # Formula given by Figueroa et al 2012
-  fit_accuracy <- nls(acc_vec~(1-a)-b*training_set_size^c,
-                      data = df_acc_cohen, 
-                      start = list(a=0.5,b=0.5,c=-0.5),
-                      control = nls.control(maxiter = 100, tol = 1e-8),
-                      algorithm = "port"
-  )  
+  if (param =="Accuracy") {
+    fit_accuracy <- nls(acc_vec~(1-a)-b*training_set_size^c,
+                        data = df_acc_cohen, 
+                        start = list(a=0.5,b=0.5,c=-0.5),
+                        control = nls.control(maxiter = 100, tol = 1e-8),
+                        algorithm = "port"
+    ) 
+  } else {
+    fit_accuracy <- nls(cohen_vec~(1-a)-b*training_set_size^c,
+                        data = df_acc_cohen, 
+                        start = list(a=0.5,b=0.5,c=-0.5),
+                        control = nls.control(maxiter = 100, tol = 1e-8),
+                        algorithm = "port"
+    )  
+  }
+  
   # Coefficients: 
   a_fit <- summary(fit_accuracy)$coefficients[,1][[1]]
   b_fit <- summary(fit_accuracy)$coefficients[,1][[2]]
@@ -119,10 +129,17 @@ minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
   # Circles = calculated values of accuracy given a sample size.
   # Lines = fitted data.
   
-  # # Calculated accuracy vs sample size
-  plot(df_acc_cohen$training_set_size,
-       df_acc_cohen$acc_vec,
-       xlab = "Training set size", ylab = "Accuracy of prediction")
+  if (param =="Accuracy") {
+    # # Calculated accuracy vs sample size:
+    plot(df_acc_cohen$training_set_size,
+         df_acc_cohen$acc_vec,
+         xlab = "Training set size", ylab = "Accuracy of prediction")
+  } else {
+    # # Calculated Kappa vs sample size:
+    plot(df_acc_cohen$training_set_size,
+         df_acc_cohen$cohen_vec,
+         xlab = "Training set size", ylab = "Kappa of prediction")
+  }
   # # Middle line:
   lines(df_acc_cohen$training_set_size,
         predict(fit_accuracy,df_acc_cohen$training_set_size))
@@ -137,19 +154,23 @@ minimum_sample_rf_parallel <- function(X,Y,p_vec,thr_acc,n.cores){
   
   # Minimum sample size calculation:
   # Simply with the formula, solving for new_data:
-  min_sam_size <- fit_acc_fun(a_fit,b_fit,c_fit,thr_acc)
+  min_sam_size <- fit_acc_fun(a_fit,b_fit,c_fit,thr_param)
   
   # Confidence interval for minimum sample size:
   CI_vec <- CI_MinimumSampleSize_fun(df_acc_cohen$training_set_size,
                                      prediction.ci,
-                                     thr_acc,
+                                     thr_param,
                                      min_sam_size,
                                      fit_accuracy,
                                      w=0.005)
   
   # Print results.
-  print("For minimum accuracy:")
-  print(thr_acc)
+  if (param=="Accuracy") {
+    print("For minimum accuracy:")
+  } else {
+    print("For minimum kappa:")
+  }
+  print(thr_param)
   print("Minimum sample size:")
   print(min_sam_size)
   

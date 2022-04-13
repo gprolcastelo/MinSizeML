@@ -52,7 +52,8 @@ system.time(
 minimum_sample_knn(X = X_market, 
                    Y = Y_market,
                    p_vec = 1:99/100,
-                   thr_acc = 0.9,
+                   param = "Accuracy",  # "Accuracy" or "Kappa"
+                   thr_param = 0.9,
                    n.cores = 1)
 )
 ```
@@ -68,7 +69,8 @@ system.time(
     X_market,
     Y_market,
     p_vec = 1:99/100, 
-    thr_acc = 0.9, 
+    param = "Kappa",  # "Accuracy" or "Kappa"
+    thr_param = 0.9, 
     n.cores = 1
     )
 )
@@ -105,7 +107,8 @@ system.time(
 minimum_sample_naivebayes(X = X_market, 
                           Y = Y_market,
                           p_vec = 1:99/100,
-                          thr_acc = 0.9,
+                          param = "Kappa",  # "Accuracy" or "Kappa"
+                          thr_param = 0.9,
                           n.cores = 1)
 )
 ```
@@ -120,10 +123,13 @@ system.time(
 minimum_sample_rf_parallel(X = X_market, 
                            Y = Y_market,
                            p_vec = 1:99/100,
-                           thr_acc = 0.9,
+                           param = "Kappa",  # "Accuracy" or "Kappa"
+                           thr_param = 0.9,
                            n.cores = 8)
 )
 ```
+
+
 
 ## iris
 
@@ -168,35 +174,11 @@ iris_knn <- minimum_sample_knn(
   X = X_iris, 
   Y = Y_iris,
   p_vec = 10:90/100,
-  thr_acc = 0.9,
+  param = "Kappa",  # "Accuracy" or "Kappa"
+  thr_param = 0.9,
   n.cores = 1)
 )
 ```
-
-```{r}
-fit_cohen <- nls(cohen_vec~(1-a)-b*training_set_size^c,
-                      data = iris_knn$df, 
-                      start = list(a=0.5,b=0.5,c=-0.5),
-                      control = nls.control(maxiter = 100, tol = 1e-8),
-                      algorithm = "port"
-  )
-summary_fit_cohen <- summary(fit_cohen)
-# Scatter 
-plot(x = iris_knn$df$training_set_size,
-     y = iris_knn$df$cohen_vec,
-     xlab = "Training set size \n",
-     ylab = "Cohen's kappa",
-     sub = paste("Residual standard error:",
-                 round(summary_fit_cohen$sigma,
-                       digits = 5),
-                 sep = " ")
-     )
-# Fit:
-lines(iris_knn$df$training_set_size,
-        predict(fit_cohen,iris_knn$df$training_set_size))
-```
-
-
 
 
 ### Random forest
@@ -208,33 +190,13 @@ iris_rf <-minimum_sample_rf_parallel(
   X = X_iris, 
   Y = Y_iris,
   p_vec = 10:90/100,
-  thr_acc = 0.9,
+  param = "Kappa",  # "Accuracy" or "Kappa"
+  thr_param = 0.9,
   n.cores = 1)
 )
 ```
 
-```{r}
-fit_cohen <- nls(cohen_vec~(1-a)-b*training_set_size^c,
-                      data = iris_logreg$df, 
-                      start = list(a=0.5,b=0.5,c=-0.5),
-                      control = nls.control(maxiter = 100, tol = 1e-8),
-                      algorithm = "port"
-  )
-summary_fit_cohen <- summary(fit_cohen)
-# Scatter 
-plot(x = Smarket_logreg$df$training_set_size,
-     y = Smarket_logreg$df$cohen_vec,
-     xlab = "Training set size \n",
-     ylab = "Cohen's kappa",
-     sub = paste("Residual standard error:",
-                 round(summary_fit_cohen$sigma,
-                       digits = 5),
-                 sep = " ")
-     )
-# Fit:
-lines(Smarket_logreg$df$training_set_size,
-        predict(fit_cohen,Smarket_logreg$df$training_set_size))
-```
+
 
 
 ## Winsconsin breast cancer dataset, normalized
@@ -290,7 +252,9 @@ source("./codes/rf_fun_parallel.R")
 
 ```{r}
 # Data:
-wbcd_n <- read.csv("./data/classification/wbcd_normalized.csv",header = T,stringsAsFactors = T)
+wbcd_n <- read.csv("./data/classification/wbcd_normalized.csv",
+                   header = T,
+                   stringsAsFactors = T)
 # head(wbcd_n)
 # Variable to predict:
 Y_wbcd_n <- wbcd_n[,ncol(wbcd_n)]
@@ -304,8 +268,9 @@ X_wbcd_n <- wbcd_n[,-ncol(wbcd_n)]
 ```{r}
 system.time(
 minimum_sample_knn(X = X_wbcd_n, Y = Y_wbcd_n,
-                  p_vec = 1:99/100,
-                  thr_acc = 0.95,
+                  p_vec = 10:90/100,
+                  param = "Kappa",  # "Accuracy" or "Kappa"
+                  thr_param = 0.9,
                   n.cores = 1)
 )
 ```
@@ -319,8 +284,9 @@ minimum_sample_knn(X = X_wbcd_n, Y = Y_wbcd_n,
 system.time(
   minimum_sample_logistic_v2_parallel(X_wbcd_n,
                                       Y_wbcd_n,
-                                      p_vec = 1:99/100, 
-                                      thr_acc = 0.95, 
+                                      p_vec = 10:90/100, 
+                                      param = "Kappa",  # "Accuracy" or "Kappa"
+                                      thr_param = 0.9, 
                                       n.cores = 1
                                       )
 )
@@ -334,7 +300,8 @@ system.time(
 system.time(
 minimum_sample_naivebayes(X = X_wbcd_n, Y = Y_wbcd_n,
                   p_vec = 1:99/100,
-                  thr_acc = 0.95,
+                  param = "Kappa",  # "Accuracy" or "Kappa"
+                  thr_param = 0.9,
                   n.cores = 1)
 )
 ```
@@ -347,8 +314,9 @@ minimum_sample_naivebayes(X = X_wbcd_n, Y = Y_wbcd_n,
 ```{r}
 system.time(
 minimum_sample_rf_parallel(X = X_wbcd_n, Y = Y_wbcd_n,
-                  p_vec = 1:99/100,
-                  thr_acc = 0.95,
+                  p_vec = 10:90/100,
+                  param = "Kappa",  # "Accuracy" or "Kappa"
+                  thr_param = 0.9,
                   n.cores = 8)
 )
 ```
@@ -423,13 +391,10 @@ X_wbcd_z <- wbcd_z[,-ncol(wbcd_z)]
 system.time(
 output_knn <- minimum_sample_knn(X = X_wbcd_z, Y = Y_wbcd_z,
                   p_vec = 1:99/100,
-                  thr_acc = 0.9,
+                  param = "Kappa",  # "Accuracy" or "Kappa"
+                  thr_param = 0.9,
                   n.cores = 1)
 )
-```
-
-```{r}
-output_knn
 ```
 
 
@@ -441,15 +406,13 @@ system.time(
 output_logreg <- minimum_sample_logistic_v2_parallel(X_wbcd_z,
                                       Y_wbcd_z,
                                       p_vec = 1:99/100, 
-                                      thr_acc = 0.9, 
+                                      param = "Kappa",  # "Accuracy" or "Kappa"
+                                      thr_param = 0.9, 
                                       n.cores = 1
                                       )
 )
 ```
 
-```{r}
-output_logreg
-```
 
 
 
@@ -460,14 +423,10 @@ system.time(
 output_nb <- minimum_sample_naivebayes(X = X_wbcd_z, 
                           Y = Y_wbcd_z,
                           p_vec = 1:99/100,
-                          thr_acc = 0.9,
+                          param = "Kappa",  # "Accuracy" or "Kappa"
+                          thr_param = 0.9,
                           n.cores = 1)
 )
-```
-
-
-```{r}
-output_nb
 ```
 
 
@@ -479,14 +438,10 @@ system.time(
 output_rf <- minimum_sample_rf_parallel(X = X_wbcd_z, 
                                         Y = Y_wbcd_z,
                                         p_vec = 1:99/100,
-                                        thr_acc = 0.9,
+                                        param = "Kappa",  # "Accuracy" or "Kappa"
+                                        thr_param = 0.9,
                                         n.cores = 8)
 )
-```
-
-
-```{r}
-output_rf
 ```
 
 
@@ -544,12 +499,22 @@ system.time(
 ameth_rf <- minimum_sample_rf_continuous(
   X = X_ameth, 
   Y = Y_ameth,
-  p_vec = 1:9/10,
-  thr_rmse = 10,
+  p_vec = 10:90/100,
+  thr_R2 = 0.9,
   n.cores = 8)
 )
 ```
 
+```{r}
+plot(ameth_rf$training_set_size,ameth_rf$R2_vec)
+fit_R2 <- lm(ameth_rf$R2_vec ~ ameth_rf$training_set_size)
+abline(fit_R2)
+```
+
+
+```{r}
+summary(lm(ameth_rf$R2_vec ~ ameth_rf$training_set_size))
+```
 
 
 
