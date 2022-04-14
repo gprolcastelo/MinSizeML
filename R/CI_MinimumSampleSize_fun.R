@@ -1,3 +1,10 @@
+#' CI for minimum sample size
+#' 
+#' Find the confidence interval for minimum sample size, given a fitted accuracy/Kappa curve
+#' 
+#' @param tr_set_size: Training set size
+#' @return CI based on fitted upper and lower lines
+#' 
 CI_MinimumSampleSize_fun <- function(tr_set_size,prediction.ci,thr_acc,min_sam_size,fit_accuracy,w){
   
   # Unpack prediction.ci: 

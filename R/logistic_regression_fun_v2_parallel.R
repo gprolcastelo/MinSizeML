@@ -1,11 +1,8 @@
-########################
-# Logistics Regression #
-########################
-
-
-#######################
-# Train and test:
-#######################
+#' Logistic regression algorithm for minimum sample size estimation
+#' 
+#' This algorithm determines the minimum sample size to use with the algorithm
+#' logistic regresion, given a minimum value for the metric ("Accuracy" or "Kappa")
+#' @export
 
 minimum_sample_logistic_v2_parallel <- function(X,Y,p_vec,param,thr_param,n.cores){
   
@@ -47,7 +44,7 @@ minimum_sample_logistic_v2_parallel <- function(X,Y,p_vec,param,thr_param,n.core
     .combine = 'rbind'
   ) %dopar% {
     library(caret)
-    source("./codes/cohen_kappa_fun.R")
+    source("./R/cohen_kappa_fun.R")
     
     # Split data for training set (keep a portion p=i):
     trainIndex <- createDataPartition(Y, p = i, 

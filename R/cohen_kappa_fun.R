@@ -1,3 +1,7 @@
+#' Cohen's Kappa
+#' 
+#' Custom-made function to calculate the Cohen's Kappa.
+#' @export
 cohen_kappa <- function(predict_result,test){
 # Cohen's kappa:
 # Contingency table

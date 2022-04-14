@@ -1,8 +1,20 @@
-########################
-#     Naive Bayes      #
-########################
+#' kNN algorithm for minimum sample size estimation
+#' 
+#' This algorithm determines the minimum sample size to use with the algorithm
+#' knn, given a minimum value for the metric ("Accuracy" or "Kappa")
+#' 
+#' @param X: variables to predict from
+#' @param Y: predictor variables, i.e. the outcome
+#' @param p_vec: a vector that gives the ratio of data to use in the training step
+#' @param param: specify the metric to use. This can be "Accuracy" or "Kappa" for
+#' classification problem.
+#' @param thr_param: value of the metric for which to calculate the minimum sample size
+#' @param n.cores: number of cores to use (for small datasets, recommended is 1)
+#' @return List with minimum sample size, corresponding CI, dataframe with sample size
+#' and corresponding obtained metric, and fit parameters of the metric.
+#' @export
 
-minimum_sample_naivebayes <- function(X,Y,p_vec,param,thr_param,n.cores){
+minimum_sample_knn <- function(X,Y,p_vec,param,thr_param,n.cores){
   
   # For paralelization with foreach:
   # n.cores <- parallel::detectCores() - 2
@@ -44,7 +56,7 @@ minimum_sample_naivebayes <- function(X,Y,p_vec,param,thr_param,n.cores){
     .combine = 'rbind'
   ) %dopar% {
     library(caret)
-    source("./codes/cohen_kappa_fun.R")
+    source("./R/cohen_kappa_fun.R")
     
     # Split data for training set (keep a portion p=i):
     trainIndex <- createDataPartition(Y, p = i, 
@@ -60,9 +72,9 @@ minimum_sample_naivebayes <- function(X,Y,p_vec,param,thr_param,n.cores){
     
     # Training data:
     trainFit <- train(x = trainX, y = trainY,
-                   method = "nb", 
-                   metric = param,
-                   trControl = train_control)
+                      method = "knn", 
+                      metric = param, 
+                      trControl = train_control)
     
     # Predictions:
     Prediction <- predict(trainFit, newdata = testX)
@@ -90,12 +102,12 @@ minimum_sample_naivebayes <- function(X,Y,p_vec,param,thr_param,n.cores){
                         algorithm = "port"
     ) 
   } else {
-    fit_accuracy <- nls(cohen_vec~(1-a)-b*training_set_size^c,
-                        data = df_acc_cohen, 
-                        start = list(a=0.5,b=0.5,c=-0.5),
-                        control = nls.control(maxiter = 100, tol = 1e-8),
-                        algorithm = "port"
-    )  
+  fit_accuracy <- nls(cohen_vec~(1-a)-b*training_set_size^c,
+                      data = df_acc_cohen, 
+                      start = list(a=0.5,b=0.5,c=-0.5),
+                      control = nls.control(maxiter = 100, tol = 1e-8),
+                      algorithm = "port"
+  )  
   }
   
   # Coefficients: 
@@ -118,14 +130,12 @@ minimum_sample_naivebayes <- function(X,Y,p_vec,param,thr_param,n.cores){
   # Circles = calculated values of accuracy given a sample size.
   # Lines = fitted data.
   
-  # # Calculated accuracy vs sample size
   if (param =="Accuracy") {
-    # # Calculated accuracy vs sample size:
+  # # Calculated accuracy vs sample size
     plot(df_acc_cohen$training_set_size,
-         df_acc_cohen$acc_vec,
-         xlab = "Training set size", ylab = "Accuracy of prediction")
+       df_acc_cohen$acc_vec,
+       xlab = "Training set size", ylab = "Accuracy of prediction")
   } else {
-    # # Calculated Kappa vs sample size:
     plot(df_acc_cohen$training_set_size,
          df_acc_cohen$cohen_vec,
          xlab = "Training set size", ylab = "Kappa of prediction")
@@ -160,6 +170,7 @@ minimum_sample_naivebayes <- function(X,Y,p_vec,param,thr_param,n.cores){
   } else {
     print("For minimum kappa:")
   }
+  
   print(thr_param)
   print("Minimum sample size:")
   print(min_sam_size)
@@ -178,6 +189,6 @@ minimum_sample_naivebayes <- function(X,Y,p_vec,param,thr_param,n.cores){
                       "CI" = CI_vec, 
                       "df"= df_acc_cohen, 
                       "coeffs" = c(a_fit,b_fit,c_fit))
-  return(return_info)
   
+  return(return_info)
 }

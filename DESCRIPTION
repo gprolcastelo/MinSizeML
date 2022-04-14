@@ -1,0 +1,10 @@
+Package: MinSizeML
+Title: Estimate Minimum Sample Size in Machine Learning
+Version: 0.1
+Author: Guillermo Prol Castelo <gprolcast@gmail.com>
+Maintainer: Guillermo Prol Castelo <gprolcast@gmail.com>
+Description: Several Machine Learning algorithms may be used to estimate the minimum sample size in a problem of classification or regression, for a given  minimum metric (accuracy, kappa or R^2), and set of variables X and predictor variable Y.
+Depends: R(>= 4.1.2), caret, foreach, doParallel
+License: MIT
+Encoding: UTF-8
+RoxygenNote: 7.1.2
