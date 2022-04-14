@@ -1,10 +1,10 @@
-#' Logistic regression algorithm for minimum sample size estimation
+#' Algorithm for minimum sample size estimation in ML
 #' 
-#' This algorithm determines the minimum sample size to use with the algorithm
-#' logistic regresion, given a minimum value for the metric ("Accuracy" or "Kappa")
+#' This algorithm determines the minimum sample size to use with a specified algorithm,
+#' given a minimum value for the metric ("Accuracy" or "Kappa")
+#' @param  algorithm Choose from "knn", "glm", "nb", or "rf"
 #' @export
-
-minimum_sample_logistic_v2_parallel <- function(X,Y,p_vec,param,thr_param,n.cores){
+minimum_sample_classification <- function(X,Y,algorithm,p_vec=1:99/100,param,thr_param,n.cores=1){
   
   # For paralelization with foreach:
   # n.cores <- parallel::detectCores() - 2
@@ -18,6 +18,14 @@ minimum_sample_logistic_v2_parallel <- function(X,Y,p_vec,param,thr_param,n.core
   #register it to be used by %dopar%
   doParallel::registerDoParallel(cl = my.cluster)
   
+  #check if it is registered (optional)
+  # foreach::getDoParRegistered()
+  
+  #how many workers are available? (optional)
+  # foreach::getDoParWorkers()
+  
+  
+  
   # Control to get Y as a vector rather than a list:
   if (typeof(Y)=="list") {
     Y <- unlist(Y)
@@ -25,26 +33,18 @@ minimum_sample_logistic_v2_parallel <- function(X,Y,p_vec,param,thr_param,n.core
   
   # Parameter tuning:
   # Define parameters to use cross-validation in the train() function:
-  # N-fold cross validation 
-  # http://datascience.recursos.uoc.edu/es/n-fold-cross-validation/
   train_control <- trainControl(## 5-fold CV
     method = "repeatedcv",
     number = 5,
     ## repeated 1 times
     repeats = 1)
   
-  # Initialize vectors to save properties:
-  acc_vec <- c()
-  cohen_vec <- c()
-  training_set_size <- c()
-  
   # Loop through the data sizes given by p_vec
+  
   x_foreach <- foreach(
     i = p_vec,
     .combine = 'rbind'
   ) %dopar% {
-    library(caret)
-    source("./R/cohen_kappa_fun.R")
     
     # Split data for training set (keep a portion p=i):
     trainIndex <- createDataPartition(Y, p = i, 
@@ -57,34 +57,51 @@ minimum_sample_logistic_v2_parallel <- function(X,Y,p_vec,param,thr_param,n.core
     trainY <- Y[trainIndex]
     testY <- Y[-trainIndex]
     
-    # Fit the training data:
-    glmFit <- train(x = trainX, y = trainY,
-                    method = "glm",
-                    #family = binomial,
-                    metric = param,
-                    trControl = train_control
-    )
+    # Select algorithm an fit:
+    if (algorithm == "rf") {
+      
+    # Create grid for the train() function
+    rfGrid <- expand.grid(mtry=round(c(2, sqrt(ncol(trainX))/2,
+                                       seq(sqrt(ncol(trainX)), 
+                                           ncol(trainX), 
+                                           length.out = 4))))
+    
+    # Training data:
+    trainFit <- train(x = trainX, y = trainY,
+                   method = algorithm, 
+                   trControl = train_control,
+                   metric = param,
+                   ## This last option is actually one
+                   ## for gbm() that passes through
+                   verbose = TRUE, 
+                   ## Now specify the exact models 
+                   ## to evaluate:
+                   tuneGrid = rfGrid)
+    
+    } else {
+      # Training data:
+      trainFit <- train(x = trainX, y = trainY,
+                        method = algorithm, 
+                        metric = param, 
+                        trControl = train_control)
+    }
     
     # Predictions:
-    glmPred <- predict(glmFit,
-                       newdata = X[-trainIndex,])
-    
-    # Assign prediction probability to yes/no values:
-    # not necessary using train()
-    # glm.pred <- ifelse(test = glm.probs > 0.5, yes = "Up", no = "Down")
+    Prediction <- predict(trainFit, newdata = testX)
     
     # Return when using paralelization with foreach:
     return(c(length(trainIndex),  # save size of training set
-             mean(glmPred == testY),  # save accuracy
-             cohen_kappa(glmPred,testY)  # save Cohen's kappa
+             mean(Prediction == testY),  # save accuracy
+             cohen_kappa(Prediction,testY)  # save Cohen's kappa
     )
     )
+    
   }
   
   # Create dataframe with saved vectors:
   df_acc_cohen <- data.frame(x_foreach, row.names = NULL)
   names(df_acc_cohen) <- c("training_set_size","acc_vec","cohen_vec")
-  
+  # print(head(df_acc_cohen))
   # Fit non-linear regression to get the accuracy fit.
   # Formula given by Figueroa et al 2012
   if (param =="Accuracy") {
@@ -102,6 +119,7 @@ minimum_sample_logistic_v2_parallel <- function(X,Y,p_vec,param,thr_param,n.core
                         algorithm = "port"
     )  
   }
+  
   # Coefficients: 
   a_fit <- summary(fit_accuracy)$coefficients[,1][[1]]
   b_fit <- summary(fit_accuracy)$coefficients[,1][[2]]
@@ -122,7 +140,6 @@ minimum_sample_logistic_v2_parallel <- function(X,Y,p_vec,param,thr_param,n.core
   # Circles = calculated values of accuracy given a sample size.
   # Lines = fitted data.
   
-  # # Calculated accuracy vs sample size
   if (param =="Accuracy") {
     # # Calculated accuracy vs sample size:
     plot(df_acc_cohen$training_set_size,
@@ -159,14 +176,14 @@ minimum_sample_logistic_v2_parallel <- function(X,Y,p_vec,param,thr_param,n.core
                                      w=0.005)
   
   # Print results.
-  # Print results.
+  print(c("Chosen algorithm: ", algorithm),quote=F)
   if (param=="Accuracy") {
-    print("For minimum accuracy:")
+    print("For minimum accuracy:",quote=F)
   } else {
-    print("For minimum kappa:")
+    print("For minimum kappa:",quote=F)
   }
   print(thr_param)
-  print("Minimum sample size:")
+  print("Minimum sample size:",quote=F)
   print(min_sam_size)
   
   
@@ -176,7 +193,7 @@ minimum_sample_logistic_v2_parallel <- function(X,Y,p_vec,param,thr_param,n.core
   # print(CI_vec$b)
   # print("CI for minimum sample size: c)")
   # print(CI_vec$c)
-  print("CI for minimum sample size: d)")
+  print("CI for minimum sample size: d)",quote=F)
   print(CI_vec)
   
   return_info <- list("Nmin" = min_sam_size, 
@@ -186,10 +203,3 @@ minimum_sample_logistic_v2_parallel <- function(X,Y,p_vec,param,thr_param,n.core
   return(return_info)
   
 }
-# Logistic regression steps from:
-# https://www.datacamp.com/community/tutorials/logistic-regression-R
-
-## Next steps:
-# - Get a ROC from the previous point -> I think I need numerical predictions
-# - Turn into a function, with inputs: dataset,column to predict; output: predictions
-# - Goodness of fit measures: MAE and RMSE (see Figueroa 2012)
