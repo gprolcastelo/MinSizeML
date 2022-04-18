@@ -6,7 +6,15 @@
 \usage{
 fit_acc_fun(a, b, c, x)
 }
+\arguments{
+\item{a, b, c}{Coefficient from fitted formula}
+
+\item{x}{Metric value (between 0 and 1)}
+}
+\value{
+Corresponding sample size given the metric and parameters, solving
+for the fitted formula.
+}
 \description{
-Used to calculate the corresponding size, given the parameters and an accuracy
-or Kappa value.
+Used to calculate the sample size, given the parameters and a metric value.
 }

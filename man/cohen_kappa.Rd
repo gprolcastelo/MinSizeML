@@ -6,6 +6,12 @@
 \usage{
 cohen_kappa(predict_result, test)
 }
+\arguments{
+\item{predict_result}{A vector resulting from the predict function}
+
+\item{test}{A vector with the real values.}
+}
 \description{
-Custom-made function to calculate the Cohen's Kappa.
+Custom-made function to calculate the Cohen's Kappa, which compares two vectors:
+the result from predict() and the actual values, i.e., the test.
 }

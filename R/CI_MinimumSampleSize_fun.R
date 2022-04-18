@@ -2,10 +2,17 @@
 #' 
 #' Find the confidence interval for minimum sample size, given a fitted accuracy/Kappa curve
 #' 
-#' @param tr_set_size: Training set size
+#' @import stats
+#' @param tr_set_size Training set size
+#' @param prediction.ci Confidence Interval for the fitted curve, made up of three variables.
+#' @param thr_acc Threshold of the chosen metric.
+#' @param min_sam_size Estimated minimum sample size.
+#' @param fit_accuracy Fitted object from nls.
+#' @param w Width for CI estimation (may not be used)
 #' @return CI based on fitted upper and lower lines
 #' 
 CI_MinimumSampleSize_fun <- function(tr_set_size,prediction.ci,thr_acc,min_sam_size,fit_accuracy,w){
+  
   
   # Unpack prediction.ci: 
   predictY<-prediction.ci[,1];
@@ -54,7 +61,7 @@ CI_MinimumSampleSize_fun <- function(tr_set_size,prediction.ci,thr_acc,min_sam_s
   # d) fitting upper and lower curves:
   
   # d).1. LB:
-  fit_up <- nls(predictY.up~(1-a)-b*tr_set_size^c,
+  fit_up <- stats::nls(predictY.up~(1-a)-b*tr_set_size^c,
                 start = list(a=0,b=1,c=-0.5),
                 control = nls.control(maxiter = 100, tol = 1e-8),
                 algorithm = "port"

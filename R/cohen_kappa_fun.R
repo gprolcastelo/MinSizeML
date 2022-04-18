@@ -1,7 +1,11 @@
 #' Cohen's Kappa
 #' 
-#' Custom-made function to calculate the Cohen's Kappa.
-#' @export
+#' Custom-made function to calculate the Cohen's Kappa, which compares two vectors:
+#' the result from predict() and the actual values, i.e., the test.
+#' 
+#' @param predict_result A vector resulting from the predict function
+#' @param test A vector with the real values.
+#' 
 cohen_kappa <- function(predict_result,test){
 # Cohen's kappa:
 # Contingency table

@@ -14,7 +14,17 @@ CI_MinimumSampleSize_fun(
 )
 }
 \arguments{
-\item{tr_set_size:}{Training set size}
+\item{tr_set_size}{Training set size}
+
+\item{prediction.ci}{Confidence Interval for the fitted curve, made up of three variables.}
+
+\item{thr_acc}{Threshold of the chosen metric.}
+
+\item{min_sam_size}{Estimated minimum sample size.}
+
+\item{fit_accuracy}{Fitted object from nls.}
+
+\item{w}{Width for CI estimation (may not be used)}
 }
 \value{
 CI based on fitted upper and lower lines
