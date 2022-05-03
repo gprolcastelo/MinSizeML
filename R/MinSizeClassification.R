@@ -106,7 +106,19 @@ MinSizeClassification <- function(X,Y,algorithm,metric,thr_metric,p_vec=1:99/100
   # Create dataframe with saved vectors:
   df_acc_cohen <- data.frame(x_foreach, row.names = NULL)
   names(df_acc_cohen) <- c("training_set_size","acc_vec","cohen_vec")
-  # print(head(df_acc_cohen))
+  
+  if (metric =="Accuracy") {
+    # # Calculated accuracy vs sample size:
+    plot(df_acc_cohen$training_set_size,
+         df_acc_cohen$acc_vec,
+         xlab = "Training set size", ylab = "Accuracy of prediction")
+  } else {
+    # # Calculated Kappa vs sample size:
+    plot(df_acc_cohen$training_set_size,
+         df_acc_cohen$cohen_vec,
+         xlab = "Training set size", ylab = "Kappa of prediction")
+  }
+  
   # Fit non-linear regression to get the accuracy fit.
   # Formula given by Figueroa et al 2012
   if (metric =="Accuracy") {
@@ -145,17 +157,17 @@ MinSizeClassification <- function(X,Y,algorithm,metric,thr_metric,p_vec=1:99/100
   # Circles = calculated values of accuracy given a sample size.
   # Lines = fitted data.
   
-  if (metric =="Accuracy") {
-    # # Calculated accuracy vs sample size:
-    plot(df_acc_cohen$training_set_size,
-         df_acc_cohen$acc_vec,
-         xlab = "Training set size", ylab = "Accuracy of prediction")
-  } else {
-    # # Calculated Kappa vs sample size:
-    plot(df_acc_cohen$training_set_size,
-         df_acc_cohen$cohen_vec,
-         xlab = "Training set size", ylab = "Kappa of prediction")
-  }
+  # if (metric =="Accuracy") {
+  #   # # Calculated accuracy vs sample size:
+  #   plot(df_acc_cohen$training_set_size,
+  #        df_acc_cohen$acc_vec,
+  #        xlab = "Training set size", ylab = "Accuracy of prediction")
+  # } else {
+  #   # # Calculated Kappa vs sample size:
+  #   plot(df_acc_cohen$training_set_size,
+  #        df_acc_cohen$cohen_vec,
+  #        xlab = "Training set size", ylab = "Kappa of prediction")
+  # }
   # # Middle line:
   graphics::lines(df_acc_cohen$training_set_size,
         predict(fit_accuracy,df_acc_cohen$training_set_size))
@@ -172,14 +184,6 @@ MinSizeClassification <- function(X,Y,algorithm,metric,thr_metric,p_vec=1:99/100
   # Simply with the formula, solving for new_data:
   min_sam_size <- fit_acc_fun(a_fit,b_fit,c_fit,thr_metric)
   
-  # Confidence interval for minimum sample size:
-  CI_vec <- CI_MinimumSampleSize_fun(df_acc_cohen$training_set_size,
-                                     prediction.ci,
-                                     thr_metric,
-                                     min_sam_size,
-                                     fit_accuracy,
-                                     w=0.005)
-  
   # Print results.
   print(c("Chosen algorithm: ", algorithm),quote=F)
   if (metric=="Accuracy") {
@@ -191,6 +195,25 @@ MinSizeClassification <- function(X,Y,algorithm,metric,thr_metric,p_vec=1:99/100
   print("Minimum sample size:",quote=F)
   print(min_sam_size)
   
+  # Confidence interval for minimum sample size:
+  CI_vec <- CI_MinimumSampleSize_fun(df_acc_cohen$training_set_size,
+                                     prediction.ci,
+                                     thr_metric,
+                                     min_sam_size,
+                                     fit_accuracy,
+                                     w=0.005)
+  
+  # Print results.
+  # print(c("Chosen algorithm: ", algorithm),quote=F)
+  # if (metric=="Accuracy") {
+  #   print("For minimum accuracy:",quote=F)
+  # } else {
+  #   print("For minimum kappa:",quote=F)
+  # }
+  # print(thr_metric)
+  # print("Minimum sample size:",quote=F)
+  # print(min_sam_size)
+  # 
   
   # print("CI for minimum sample size: a)")
   # print(CI_vec$a)
