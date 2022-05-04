@@ -18,7 +18,10 @@
 #' @return List with minimum sample size, corresponding CI, dataframe with sample size, 
 #' corresponding obtained metrics, and fit parameters of the metric.
 #' @export
-MinSizeClassification <- function(X,Y,algorithm,metric,thr_metric,p_vec=1:99/100,n.cores=1){
+MinSizeClassification <- function(X,Y,algorithm,
+                                  metric,thr_metric,p_vec=1:99/100,
+                                  cv_number=5, show_plot = T,
+                                  n.cores=1){
   
   # For paralelization with foreach:
   # Create the cluster
@@ -37,9 +40,9 @@ MinSizeClassification <- function(X,Y,algorithm,metric,thr_metric,p_vec=1:99/100
   
   # Parameter tuning:
   # Define parameters to use cross-validation in the train() function:
-  train_control <- trainControl(## 5-fold CV
+  train_control <- trainControl(## n-fold CV
     method = "repeatedcv",
-    number = 5,
+    number = cv_number,
     ## repeated 1 times
     repeats = 1)
   
@@ -107,6 +110,9 @@ MinSizeClassification <- function(X,Y,algorithm,metric,thr_metric,p_vec=1:99/100
   df_acc_cohen <- data.frame(x_foreach, row.names = NULL)
   names(df_acc_cohen) <- c("training_set_size","acc_vec","cohen_vec")
   
+  if (show_plot) {
+    
+  
   if (metric =="Accuracy") {
     # # Calculated accuracy vs sample size:
     plot(df_acc_cohen$training_set_size,
@@ -117,6 +123,8 @@ MinSizeClassification <- function(X,Y,algorithm,metric,thr_metric,p_vec=1:99/100
     plot(df_acc_cohen$training_set_size,
          df_acc_cohen$cohen_vec,
          xlab = "Training set size", ylab = "Kappa of prediction")
+  }
+  
   }
   
   # Fit non-linear regression to get the accuracy fit.
@@ -168,6 +176,9 @@ MinSizeClassification <- function(X,Y,algorithm,metric,thr_metric,p_vec=1:99/100
   #        df_acc_cohen$cohen_vec,
   #        xlab = "Training set size", ylab = "Kappa of prediction")
   # }
+  
+  if (show_plot) {
+    
   # # Middle line:
   graphics::lines(df_acc_cohen$training_set_size,
         predict(fit_accuracy,df_acc_cohen$training_set_size))
@@ -179,6 +190,7 @@ MinSizeClassification <- function(X,Y,algorithm,metric,thr_metric,p_vec=1:99/100
   # # Lower line:
   graphics::lines(df_acc_cohen$training_set_size,
         predictY.lw, col = "red")
+  }
   
   # Minimum sample size calculation:
   # Simply with the formula, solving for new_data:

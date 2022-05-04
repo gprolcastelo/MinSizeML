@@ -11,6 +11,8 @@ MinSizeClassification(
   metric,
   thr_metric,
   p_vec = 1:99/100,
+  cv_number = 5,
+  show_plot = T,
   n.cores = 1
 )
 }
