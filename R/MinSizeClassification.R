@@ -19,6 +19,7 @@
 #' corresponding obtained metrics, and fit parameters of the metric.
 #' @export
 MinSizeClassification <- function(X,Y,algorithm,
+                                  text_formula="Yacc~(1-a)-b*X^c",start_parameters,
                                   metric,thr_metric,p_vec=1:99/100,
                                   cv_number=5, show_plot = T,
                                   n.cores=1){
@@ -108,21 +109,40 @@ MinSizeClassification <- function(X,Y,algorithm,
   
   # Create dataframe with saved vectors:
   df_acc_cohen <- data.frame(x_foreach, row.names = NULL)
-  names(df_acc_cohen) <- c("training_set_size","acc_vec","cohen_vec")
+  names(df_acc_cohen) <- c("X","Yacc","Ycohen")
+  
+  # Plot accuracy vs size of training set.
+  # Circles = calculated values of accuracy given a sample size.
+  # Lines = fitted data.
   
   if (show_plot) {
     
   
   if (metric =="Accuracy") {
     # # Calculated accuracy vs sample size:
-    plot(df_acc_cohen$training_set_size,
-         df_acc_cohen$acc_vec,
+    plot(df_acc_cohen$X,
+         df_acc_cohen$Yacc,
          xlab = "Training set size", ylab = "Accuracy of prediction")
+    
+    # plot_metric <- ggplot(data = df_acc_cohen) + 
+    #   geom_point(mapping = aes(x=training_set_size,y=acc_vec),
+    #              shape=21,color="black",fill="black",alpha=0.9) + 
+    #   labs(x="Training set size",y="Accuracy of prediction")
+    # 
+    # print(plot_metric)
+    
   } else {
     # # Calculated Kappa vs sample size:
-    plot(df_acc_cohen$training_set_size,
-         df_acc_cohen$cohen_vec,
+    plot(df_acc_cohen$X,
+         df_acc_cohen$Ycohen,
          xlab = "Training set size", ylab = "Kappa of prediction")
+    
+    # plot_metric <- ggplot(data = df_acc_cohen) + 
+    #   geom_point(mapping = aes(x=training_set_size,y=cohen_vec),
+    #              shape=21,color="black",fill="black",alpha=0.9) + 
+    #   labs(x="Training set size",y="Kappa of prediction")
+    # 
+    # print(plot_metric)
   }
   
   }
@@ -130,16 +150,16 @@ MinSizeClassification <- function(X,Y,algorithm,
   # Fit non-linear regression to get the accuracy fit.
   # Formula given by Figueroa et al 2012
   if (metric =="Accuracy") {
-    fit_accuracy <- nls(acc_vec~(1-a)-b*training_set_size^c,
+    fit_accuracy <- nls(formula = as.formula(text_formula),
                         data = df_acc_cohen, 
-                        start = list(a=0.5,b=0.5,c=-0.5),
+                        start = start_parameters,
                         control = nls.control(maxiter = 100, tol = 1e-8),
                         algorithm = "port"
     ) 
   } else {
-    fit_accuracy <- nls(cohen_vec~(1-a)-b*training_set_size^c,
+    fit_accuracy <- nls(formula = as.formula(text_formula),
                         data = df_acc_cohen, 
-                        start = list(a=0.5,b=0.5,c=-0.5),
+                        start = start_parameters,
                         control = nls.control(maxiter = 100, tol = 1e-8),
                         algorithm = "port"
     )  
@@ -155,41 +175,38 @@ MinSizeClassification <- function(X,Y,algorithm,
                        1,
                        function(x) sum(vcov(fit_accuracy)*outer(x,x)))
   );
-  prediction.ci <- predict(fit_accuracy,x=df_acc_cohen$training_set_size) + outer(se.fit,qnorm(c(.5, .025,.975)))
+  prediction.ci <- predict(fit_accuracy,x=df_acc_cohen$X) + outer(se.fit,qnorm(c(.5, .025,.975)))
   
   predictY<-prediction.ci[,1];
   predictY.lw<-prediction.ci[,2];
   predictY.up<-prediction.ci[,3];
   
-  # Plot accuracy vs size of training set.
-  # Circles = calculated values of accuracy given a sample size.
-  # Lines = fitted data.
-  
-  # if (metric =="Accuracy") {
-  #   # # Calculated accuracy vs sample size:
-  #   plot(df_acc_cohen$training_set_size,
-  #        df_acc_cohen$acc_vec,
-  #        xlab = "Training set size", ylab = "Accuracy of prediction")
-  # } else {
-  #   # # Calculated Kappa vs sample size:
-  #   plot(df_acc_cohen$training_set_size,
-  #        df_acc_cohen$cohen_vec,
-  #        xlab = "Training set size", ylab = "Kappa of prediction")
-  # }
   
   if (show_plot) {
+    # df_predictions <- data.frame(df_acc_cohen$X,
+    #                              predictY, predictY.up, predictY.lw,
+    #                              row.names = NULL)
+    # names(df_predictions) <- c("X",
+    #                            "predictY","predictY.up","predictY.down")
     
   # # Middle line:
-  graphics::lines(df_acc_cohen$training_set_size,
-        predict(fit_accuracy,df_acc_cohen$training_set_size))
+  graphics::lines(df_acc_cohen$X,
+                  predictY, col = "black")
+    # plot_metric <- plot_metric +  geom_line(aes(y = predictY), size = 1)
   
   # # Upper line:
-  graphics::lines(df_acc_cohen$training_set_size,
+  graphics::lines(df_acc_cohen$X,
         predictY.up, col = "blue")
+    # plot_metric <- plot_metric +  geom_line(aes(y = predictY.up), size = 1)
   
   # # Lower line:
-  graphics::lines(df_acc_cohen$training_set_size,
+  graphics::lines(df_acc_cohen$X,
         predictY.lw, col = "red")
+    
+    # plot_metric <- plot_metric +  
+    #   geom_line(data = df_predictions, size = 1) 
+    
+    # print(plot_metric)
   }
   
   # Minimum sample size calculation:
@@ -207,8 +224,15 @@ MinSizeClassification <- function(X,Y,algorithm,
   print("Minimum sample size:",quote=F)
   print(min_sam_size)
   
+  print("RMSE of fit:")
+  print(RMSE(pred = predictY, obs = df_acc_cohen$Yacc,na.rm = T))
+  print("MAE of fit:")
+  print(MAE(pred = predictY, obs = df_acc_cohen$Yacc,na.rm = T))
+  print("R^2 of fit:")
+  print(R2(pred = predictY, obs = df_acc_cohen$Yacc, na.rm = T))
+  
   # Confidence interval for minimum sample size:
-  CI_vec <- CI_MinimumSampleSize_fun(df_acc_cohen$training_set_size,
+  CI_vec <- CI_MinimumSampleSize_fun(df_acc_cohen$X,
                                      prediction.ci,
                                      thr_metric,
                                      min_sam_size,

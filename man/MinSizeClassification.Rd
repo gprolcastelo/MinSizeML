@@ -8,6 +8,8 @@ MinSizeClassification(
   X,
   Y,
   algorithm,
+  text_formula = "Yacc~(1-a)-b*X^c",
+  start_parameters,
   metric,
   thr_metric,
   p_vec = 1:99/100,
