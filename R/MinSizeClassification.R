@@ -154,23 +154,51 @@ MinSizeClassification <- function(X,Y,algorithm,
     
     text_formula <- paste("Yacc~",formula_rhs,sep = "")
     
-    fit_accuracy <- nls(formula = as.formula(text_formula),
+    fit_nls <- nls(formula = as.formula(text_formula),
                         data = df_acc_cohen, 
                         start = start_parameters,
                         control = nls.control(maxiter = 100, tol = 1e-8),
                         algorithm = "port"
     ) 
+    
+    # fit_loess <- loess(formula = as.formula(text_formula),
+    #                  data = df_acc_cohen,model = T)
+    # 
+    # R2_nls <- R2(pred = predict(object = fit_nls,x=X), 
+    #              obs = df_acc_cohen$Yacc, na.rm = T)
+    # 
+    # R2_loess <- R2(pred = predict(object = fit_loess,x=X), 
+    #              obs = df_acc_cohen$Yacc, na.rm = T)
+    
   } else {
     
     text_formula <- paste("Ykap~",formula_rhs,sep = "")
     
-    fit_accuracy <- nls(formula = as.formula(text_formula),
+    fit_nls <- nls(formula = as.formula(text_formula),
                         data = df_acc_cohen, 
                         start = start_parameters,
                         control = nls.control(maxiter = 100, tol = 1e-8),
                         algorithm = "port"
     )  
+    
+    # fit_loess <- loess(formula = as.formula(text_formula),
+    #                    data = df_acc_cohen,model = T)
+    # 
+    # R2_nls <- R2(pred = predict(object = fit_nls,x=X), 
+    #              obs = df_acc_cohen$Ykap, na.rm = T)
+    # 
+    # R2_loess <- R2(pred = predict(object = fit_loess,x=X), 
+    #                obs = df_acc_cohen$Ykap, na.rm = T)
   }
+  
+  fit_accuracy <- fit_nls
+  
+  # Controlo to get best-performing fit:
+  # if (R2_nls < R2_loess) {
+  #   fit_accuracy <- fit_loess
+  # } else {
+  #   fit_accuracy <- fit_nls
+  # }
   
   # Coefficients: 
   a_fit <- summary(fit_accuracy)$coefficients[,1][[1]]
@@ -259,7 +287,8 @@ MinSizeClassification <- function(X,Y,algorithm,
                       "CI" = CI_vec, 
                       "df"= df_acc_cohen, 
                       "coeffs" = c(a_fit,b_fit,c_fit),
-                      "RMSE" = RMSE_fit, "MAE" = MAE_fit, "R2" = R2_fit)
+                      "RMSE" = RMSE_fit, "MAE" = MAE_fit, "R2" = R2_fit,
+                      "fit_object" = fit_accuracy)
   return(return_info)
   
 }
