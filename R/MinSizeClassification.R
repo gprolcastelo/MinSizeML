@@ -253,6 +253,8 @@ MinSizeClassification <- function(X,Y,algorithm,
   print("CI for minimum sample size: d)",quote=F)
   print(CI_vec)
   
+  names(df_acc_cohen) <- c("sample_size","accuracy","kappa_cohen")
+  
   return_info <- list("Nmin" = min_sam_size, 
                       "CI" = CI_vec, 
                       "df"= df_acc_cohen, 
