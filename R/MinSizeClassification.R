@@ -19,8 +19,9 @@
 #' corresponding obtained metrics, and fit parameters of the metric.
 #' @export
 MinSizeClassification <- function(X,Y,algorithm,
-                                  text_formula="Yacc~(1-a)-b*X^c",start_parameters,
-                                  metric,thr_metric,p_vec=1:99/100,
+                                  metric,thr_metric,
+                                  formula_rhs="(1-a)-b*X^c",start_parameters,
+                                  p_vec=1:99/100,
                                   cv_number=5, show_plot = T,
                                   n.cores=1){
   
@@ -109,7 +110,7 @@ MinSizeClassification <- function(X,Y,algorithm,
   
   # Create dataframe with saved vectors:
   df_acc_cohen <- data.frame(x_foreach, row.names = NULL)
-  names(df_acc_cohen) <- c("X","Yacc","Ycohen")
+  names(df_acc_cohen) <- c("X","Yacc","Ykap")
   
   # Plot accuracy vs size of training set.
   # Circles = calculated values of accuracy given a sample size.
@@ -134,7 +135,7 @@ MinSizeClassification <- function(X,Y,algorithm,
   } else {
     # # Calculated Kappa vs sample size:
     plot(df_acc_cohen$X,
-         df_acc_cohen$Ycohen,
+         df_acc_cohen$Ykap,
          xlab = "Training set size", ylab = "Kappa of prediction")
     
     # plot_metric <- ggplot(data = df_acc_cohen) + 
@@ -150,6 +151,9 @@ MinSizeClassification <- function(X,Y,algorithm,
   # Fit non-linear regression to get the accuracy fit.
   # Formula given by Figueroa et al 2012
   if (metric =="Accuracy") {
+    
+    text_formula <- paste("Yacc~",formula_rhs,sep = "")
+    
     fit_accuracy <- nls(formula = as.formula(text_formula),
                         data = df_acc_cohen, 
                         start = start_parameters,
@@ -157,6 +161,9 @@ MinSizeClassification <- function(X,Y,algorithm,
                         algorithm = "port"
     ) 
   } else {
+    
+    text_formula <- paste("Ykap~",formula_rhs,sep = "")
+    
     fit_accuracy <- nls(formula = as.formula(text_formula),
                         data = df_acc_cohen, 
                         start = start_parameters,
@@ -225,45 +232,32 @@ MinSizeClassification <- function(X,Y,algorithm,
   print(min_sam_size)
   
   print("RMSE of fit:")
-  print(RMSE(pred = predictY, obs = df_acc_cohen$Yacc,na.rm = T))
+  RMSE_fit <- RMSE(pred = predictY, obs = df_acc_cohen$Yacc,na.rm = T)
+  print(RMSE_fit)
   print("MAE of fit:")
-  print(MAE(pred = predictY, obs = df_acc_cohen$Yacc,na.rm = T))
+  MAE_fit <- MAE(pred = predictY, obs = df_acc_cohen$Yacc,na.rm = T)
+  print(MAE_fit)
   print("R^2 of fit:")
-  print(R2(pred = predictY, obs = df_acc_cohen$Yacc, na.rm = T))
+  R2_fit <- R2(pred = predictY, obs = df_acc_cohen$Yacc, na.rm = T)
+  print(R2_fit)
   
   # Confidence interval for minimum sample size:
   CI_vec <- CI_MinimumSampleSize_fun(df_acc_cohen$X,
                                      prediction.ci,
+                                     formula_rhs,
+                                     start_parameters,
                                      thr_metric,
                                      min_sam_size,
-                                     fit_accuracy,
-                                     w=0.005)
+                                     fit_accuracy)
   
-  # Print results.
-  # print(c("Chosen algorithm: ", algorithm),quote=F)
-  # if (metric=="Accuracy") {
-  #   print("For minimum accuracy:",quote=F)
-  # } else {
-  #   print("For minimum kappa:",quote=F)
-  # }
-  # print(thr_metric)
-  # print("Minimum sample size:",quote=F)
-  # print(min_sam_size)
-  # 
-  
-  # print("CI for minimum sample size: a)")
-  # print(CI_vec$a)
-  # print("CI for minimum sample size: b)")
-  # print(CI_vec$b)
-  # print("CI for minimum sample size: c)")
-  # print(CI_vec$c)
   print("CI for minimum sample size: d)",quote=F)
   print(CI_vec)
   
   return_info <- list("Nmin" = min_sam_size, 
                       "CI" = CI_vec, 
                       "df"= df_acc_cohen, 
-                      "coeffs" = c(a_fit,b_fit,c_fit))
+                      "coeffs" = c(a_fit,b_fit,c_fit),
+                      "RMSE" = RMSE_fit, "MAE" = MAE_fit, "R2" = R2_fit)
   return(return_info)
   
 }
