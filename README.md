@@ -11,7 +11,7 @@ All documentation is included in the function description.
 ## Installation from GitHub.
 
 ```r
-devtools::install_github(MinSizeML)
+devtools::install_github("gpcastelo/MinSizeML")
 ```
 
 ## Author.
