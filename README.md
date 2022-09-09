@@ -10,8 +10,10 @@ All documentation is included in the function description.
 
 ## Installation from GitHub.
 
+On an R console or RStudio, execute the following line:
+
 ```r
-devtools::install_github(MinSizeML)
+devtools::install_github("gpcastelo/MinSizeML")
 ```
 
 ## Author.
